@@ -2,6 +2,7 @@ How to roll a release:
 
 Source preparation:
   - Bump version number in setup.py
+  - Bump version number in docs/conf.py
   - Bump version number in debian/changelog
   - Tag the release
   - Push to github
