@@ -1,0 +1,19 @@
+How to roll a release:
+
+Source preparation:
+  - Bump version number in setup.py
+  - Bump version number in debian/changelog
+  - Tag the release
+  - Push to github
+
+Packaging:
+  - ./setup.py sdist
+  - dpkg-buildpackage -rfakeroot
+  - Upload tarballs and packages to kaarsemaker.net
+
+pypi:
+  - dh clean
+  - cd docs/_build/html
+  - rm -f docs.zip && zip -r docs.zip *
+  - Upload docs.zip to pypi
+  - ./setup.py register
