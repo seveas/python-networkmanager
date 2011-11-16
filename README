@@ -14,7 +14,7 @@ Quick install instructions
 
 Stable version:
 
-$ sudo easy_install python-prctl
+$ sudo easy_install python-networkmanager
 
 Latest code:
 
