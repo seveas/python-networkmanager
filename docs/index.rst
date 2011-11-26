@@ -9,6 +9,10 @@ calls are forwarded to the correct interface.
 I wrote it to reduce a 100-line python script to 50 lines. Not realizing that
 the library has more lines than the ones I removed. Oh well 😊
 
+As of version 0.9.2, python-networkmanager also ships a command-line utility
+called n-m, which allows you to manipulate NetworkManager's state from the
+command line.
+
 :mod:`NetworkManager` -- Easy communication with NetworkManager 
 ---------------------------------------------------------------
 .. module:: NetworkManager
@@ -126,3 +130,17 @@ interface.
 .. toctree::
    :maxdepth: 2
 
+The n-m utility
+---------------
+n-m is a command-line tool to deal with network-manager. It can connect you to
+defined networks and disconnect you again.
+
+Usage: [options] action [arguments]
+
+Actions:
+  list       - List all defined and active connections
+  activate   - Activate a connection
+  deactivate - Deactivate a connection
+  offline    - Deactivate all connections
+
+Suggestions for more functionality for this tool are welcome!

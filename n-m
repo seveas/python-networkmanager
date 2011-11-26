@@ -1,0 +1,106 @@
+#!/usr/bin/python
+"""
+n-m is a command-line tool to deal with network-manager. It can connect you to
+defined networks and disconnect you again.
+"""
+
+usage = """%prog [options] action [arguments]
+
+Actions:
+  list       - List all defined and active connections
+  activate   - Activate a connection
+  deactivate - Deactivate a connection
+  offline    - Deactivate all connections"""
+
+import NetworkManager
+import optparse
+import sys
+
+def main():
+    p = optparse.OptionParser(usage=usage)
+    opts, args = p.parse_args()
+
+    if not args:
+        p.print_help()
+        sys.exit(1)
+
+    if args[0] == 'list':
+        list_()
+
+    elif args[0] == 'offline':
+        offline()
+
+    elif len(args) < 2:
+        p.print_help()
+        sys.exit(1)
+
+    elif args[0] == 'activate':
+        activate(args[1:])
+
+    elif args[0] == 'deactivate':
+        deactivate(args[1:])
+
+def list_():
+    active = [x.Connection.GetSettings()['connection']['id']
+              for x in NetworkManager.NetworkManager.ActiveConnections]
+    connections = [x.GetSettings()['connection']['id']
+                   for x in NetworkManager.Settings.ListConnections()]
+    for conn in sorted(connections):
+        prefix = '* ' if conn in active else '  '
+        print prefix + conn
+
+def activate(names):
+    connections = NetworkManager.Settings.ListConnections()
+    connections = dict([(x.GetSettings()['connection']['id'], x) for x in connections])
+
+    if not NetworkManager.NetworkManager.NetworkingEnabled:
+        NetworkManager.NetworkManager.Enable(True)
+    for n in names:
+        if n not in connections:
+            print >>sys.stderr, "No such connection: %s" % n
+            sys.exit(1)
+
+        print "Activating connection '%s'" % n
+        conn = connections[n]
+        ctype = conn.GetSettings()['connection']['type']
+        if ctype == 'vpn':
+            for dev in NetworkManager.NetworkManager.GetDevices():
+                if dev.State == NetworkManager.NM_DEVICE_STATE_ACTIVATED and dev.Managed:
+                    break
+            else:
+                print >>sys.stderr, "No active, managed device found"
+                sys.exit(1)
+        else:
+            dtype = {
+                '802-11-wireless': NetworkManager.NM_DEVICE_TYPE_WIFI,
+                '802-3-ethernet': NetworkManager.NM_DEVICE_TYPE_ETHERNET,
+                'gsm': NetworkManager.NM_DEVICE_TYPE_MODEM,
+            }.get(ctype,ctype)
+            devices = NetworkManager.NetworkManager.GetDevices()
+            
+            for dev in devices:
+                if dev.DeviceType == dtype and dev.State == NetworkManager.NM_DEVICE_STATE_DISCONNECTED:
+                    break
+            else:
+                print >>sys.stderr, "No suitable and available %s device found" % ctype
+                sys.exit(1)
+
+        NetworkManager.NetworkManager.ActivateConnection(conn, dev, "/")
+
+def deactivate(names):
+    active = NetworkManager.NetworkManager.ActiveConnections
+    active = dict([(x.Connection.GetSettings()['connection']['id'], x) for x in active])
+
+    for n in names:
+        if n not in active:
+            print >>sys.stderr, "No such connection: %s" % n
+            sys.exit(1)
+
+        print "Deactivating connection '%s'" % n
+        NetworkManager.NetworkManager.DeactivateConnection(active[n])
+
+def offline():
+    NetworkManager.NetworkManager.Enable(False)
+
+if __name__ == '__main__':
+    main()
