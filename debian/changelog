@@ -1,3 +1,9 @@
+python-networkmanager (0.9.2-1) unstable; urgency=low
+
+  * New upstream release, include command-line tool
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Sat, 26 Nov 2011 21:33:21 +0100
+
 python-networkmanager (0.9.1-1) unstable; urgency=low
 
   * Initial release.
