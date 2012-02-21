@@ -12,6 +12,7 @@ Actions:
   deactivate - Deactivate a connection
   offline    - Deactivate all connections"""
 
+from dbus.exceptions import DBusException
 import NetworkManager
 import optparse
 import sys
@@ -100,7 +101,11 @@ def deactivate(names):
         NetworkManager.NetworkManager.DeactivateConnection(active[n])
 
 def offline():
-    NetworkManager.NetworkManager.Enable(False)
+    try:
+        NetworkManager.NetworkManager.Enable(False)
+    except DBusException, e:
+        if e.get_dbus_name() != 'org.freedesktop.NetworkManager.AlreadyEnabledOrDisabled':
+            raise
 
 if __name__ == '__main__':
     main()
