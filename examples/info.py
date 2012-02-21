@@ -21,7 +21,7 @@ print "%-30s %s" % ("Overall state:", c('state', NetworkManager.NetworkManager.S
 print ""
 
 print "Permissions"
-for perm, val in NetworkManager.NetworkManager.GetPermissions().iteritems():
+for perm, val in sorted(NetworkManager.NetworkManager.GetPermissions().items()):
     print "%-30s %s" % (perm[31:] + ':', val)
 
 print ""
