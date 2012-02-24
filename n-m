@@ -10,7 +10,9 @@ Actions:
   list       - List all defined and active connections
   activate   - Activate a connection
   deactivate - Deactivate a connection
-  offline    - Deactivate all connections"""
+  offline    - Deactivate all connections
+  enable     - Enable specific connection types
+  disable    - Disable specific connection types"""
 
 from dbus.exceptions import DBusException
 import NetworkManager
@@ -40,6 +42,16 @@ def main():
 
     elif args[0] == 'deactivate':
         deactivate(args[1:])
+
+    elif args[0] == 'enable':
+        enable(args[1:])
+
+    elif args[0] == 'disable':
+        disable(args[1:])
+
+    else:
+        p.print_help()
+        sys.exit(1)
 
 def list_():
     active = [x.Connection.GetSettings()['connection']['id']
@@ -72,6 +84,12 @@ def activate(names):
                 print >>sys.stderr, "No active, managed device found"
                 sys.exit(1)
         else:
+            dtype = {
+                '802-11-wireless': 'wlan',
+                'gsm': 'wwan',
+            }
+            if dtype in connection_types:
+                enable(dtype)
             dtype = {
                 '802-11-wireless': NetworkManager.NM_DEVICE_TYPE_WIFI,
                 '802-3-ethernet': NetworkManager.NM_DEVICE_TYPE_ETHERNET,
@@ -106,6 +124,21 @@ def offline():
     except DBusException, e:
         if e.get_dbus_name() != 'org.freedesktop.NetworkManager.AlreadyEnabledOrDisabled':
             raise
+
+connection_types = ['wireless','wwan','wimax']
+def enable(names):
+    for n in names:
+        if n not in connection_types:
+            print >>sys.stderr, "No such connection type: %s" % n
+            sys.exit(1)
+        setattr(NetworkManager.NetworkManager, n.title() + 'Enabled', True)
+
+def disable(names):
+    for n in names:
+        if n not in connection_types:
+            print >>sys.stderr, "No such connection type: %s" % n
+            sys.exit(1)
+        setattr(NetworkManager.NetworkManager, n.title() + 'Enabled', False)
 
 if __name__ == '__main__':
     main()
