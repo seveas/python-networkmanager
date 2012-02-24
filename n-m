@@ -56,11 +56,12 @@ def main():
 def list_():
     active = [x.Connection.GetSettings()['connection']['id']
               for x in NetworkManager.NetworkManager.ActiveConnections]
-    connections = [x.GetSettings()['connection']['id']
+    connections = [(x.GetSettings()['connection']['id'], x.GetSettings()['connection']['type'])
                    for x in NetworkManager.Settings.ListConnections()]
+    fmt = "%%s %%-%ds    %%s" % max([len(x[0]) for x in connections])
     for conn in sorted(connections):
-        prefix = '* ' if conn in active else '  '
-        print prefix + conn
+        prefix = '* ' if conn[0] in active else '  '
+        print fmt % (prefix, conn[0], conn[1])
 
 def activate(names):
     connections = NetworkManager.Settings.ListConnections()
