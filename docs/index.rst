@@ -142,5 +142,6 @@ Actions:
   activate   - Activate a connection
   deactivate - Deactivate a connection
   offline    - Deactivate all connections
-
-Suggestions for more functionality for this tool are welcome!
+  enable     - Enable specific connection types
+  disable    - Disable specific connection types
+  info       - Information about a connection
