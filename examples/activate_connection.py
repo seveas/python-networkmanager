@@ -18,7 +18,7 @@ if ctype == 'vpn':
         if dev.State == NetworkManager.NM_DEVICE_STATE_ACTIVATED and dev.Managed:
             break
     else:
-        print >>sys.stderr, "No active, managed device found"
+        print("No active, managed device found")
         sys.exit(1)
 else:
     dtype = {
@@ -32,7 +32,7 @@ else:
         if dev.DeviceType == dtype and dev.State == NetworkManager.NM_DEVICE_STATE_DISCONNECTED:
             break
     else:
-        print >>sys.stderr, "No suitable and available %s device found" % ctype
+        print("No suitable and available %s device found" % ctype)
         sys.exit(1)
 
 # And connect

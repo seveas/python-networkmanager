@@ -20,6 +20,6 @@ for h in headers:
             else:
                 val = last + 1
             key = key.strip()
-            print '%s = %d' % (key, val)
+            print('%s = %d' % (key, val))
             last = val
 

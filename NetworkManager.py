@@ -1,6 +1,9 @@
 import dbus
 import sys
 
+if sys.version_info >= (3,0):
+    basestring = str
+
 class NMDbusInterface(object):
     bus = dbus.SystemBus()
     dbus_service = 'org.freedesktop.NetworkManager'
@@ -13,15 +16,17 @@ class NMDbusInterface(object):
         self.proxy = self.bus.get_object(self.dbus_service, self.object_path)
         self.interface = dbus.Interface(self.proxy, self.interface_name)
 
+        properties = []
         try:
             properties = self.proxy.GetAll(self.interface_name,
                                            dbus_interface='org.freedesktop.DBus.Properties')
-            for p in properties:
-                if not hasattr(self.__class__, p):
-                    setattr(self.__class__, p, self._make_property(p))
-        except dbus.exceptions.DBusException, e:
+        except dbus.exceptions.DBusException as e:
             if e.get_dbus_name() != 'org.freedesktop.DBus.Error.UnknownMethod':
                 raise
+        for p in properties:
+            p = str(p)
+            if not hasattr(self.__class__, p):
+                setattr(self.__class__, p, self._make_property(p))
 
     def _make_property(self, name):
         def get(self):
@@ -33,10 +38,12 @@ class NMDbusInterface(object):
         return property(get, set)
 
     def unwrap(self, val):
+        if isinstance(val, dbus.ByteArray):
+            return "".join([str(x) for x in val])
         if isinstance(val, (dbus.Array, list, tuple)):
             return [self.unwrap(x) for x in val]
         if isinstance(val, (dbus.Dictionary, dict)):
-            return dict([(self.unwrap(x), self.unwrap(y)) for x,y in val.iteritems()])
+            return dict([(self.unwrap(x), self.unwrap(y)) for x,y in val.items()])
         if isinstance(val, dbus.ObjectPath):
             if val.startswith('/org/freedesktop/NetworkManager/'):
                 classname = val.split('/')[4]
@@ -45,12 +52,8 @@ class NMDbusInterface(object):
                    'Devices': 'Device',
                 }.get(classname, classname)
                 return globals()[classname](val)
-        if isinstance(val, dbus.ByteArray):
-            return "".join([str(x) for x in val])
         if isinstance(val, (dbus.Signature, dbus.String)):
             return str(val)
-        if isinstance(val, dbus.UTF8String):
-            return unicode(val)
         if isinstance(val, dbus.Boolean):
             return bool(val)
         if isinstance(val, (dbus.Int16, dbus.UInt16, dbus.Int32, dbus.UInt32, dbus.Int64, dbus.UInt64)):
@@ -62,14 +65,12 @@ class NMDbusInterface(object):
             return val.object_path
         if hasattr(val, '__iter__') and not isinstance(val, basestring):
             if hasattr(val, 'items'):
-                return dict([(x, self.wrap(y)) for x, y in val.iteritems()])
+                return dict([(x, self.wrap(y)) for x, y in val.items()])
             else:
                 return [self.wrap(x) for x in val]
         return val
 
     def  __getattr__(self, name):
-        if name == 'object_path':
-            print name
         try:
             return super(NMDbusInterface, self).__getattribute__(name)
         except AttributeError:
@@ -148,9 +149,10 @@ class IP6Config(NMDbusInterface):
 class VPNConnection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.VPN.Connection'
 
+
 def const(prefix, val):
     prefix = 'NM_' + prefix.upper() + '_'
-    for key, vval in globals().iteritems():
+    for key, vval in globals().items():
         if 'REASON' in key and 'REASON' not in prefix:
             continue
         if key.startswith(prefix) and val == vval:
@@ -176,6 +178,8 @@ NM_DEVICE_TYPE_OLPC_MESH = 6
 NM_DEVICE_TYPE_WIMAX = 7
 NM_DEVICE_TYPE_MODEM = 8
 NM_DEVICE_TYPE_INFINIBAND = 9
+NM_DEVICE_TYPE_BOND = 10
+NM_DEVICE_TYPE_VLAN = 11
 NM_DEVICE_CAP_NONE = 0
 NM_DEVICE_CAP_NM_SUPPORTED = 1
 NM_DEVICE_CAP_CARRIER_DETECT = 2
@@ -274,6 +278,7 @@ NM_DEVICE_STATE_REASON_GSM_SIM_PIN_REQUIRED = 46
 NM_DEVICE_STATE_REASON_GSM_SIM_PUK_REQUIRED = 47
 NM_DEVICE_STATE_REASON_GSM_SIM_WRONG = 48
 NM_DEVICE_STATE_REASON_INFINIBAND_MODE = 49
+NM_DEVICE_STATE_REASON_DEPENDENCY_FAILED = 50
 NM_DEVICE_STATE_REASON_LAST = 65535
 NM_ACTIVE_CONNECTION_STATE_UNKNOWN = 0
 NM_ACTIVE_CONNECTION_STATE_ACTIVATING = 1

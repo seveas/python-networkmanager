@@ -3,6 +3,7 @@
 n-m is a command-line tool to deal with network-manager. It can connect you to
 defined networks and disconnect you again.
 """
+from __future__ import print_function
 
 usage = """%prog [options] action [arguments]
 
@@ -71,7 +72,7 @@ def list_():
     fmt = "%%s %%-%ds    %%s" % max([len(x[0]) for x in connections])
     for conn in sorted(connections):
         prefix = '* ' if conn[0] in active else '  '
-        print fmt % (prefix, conn[0], conn[1])
+        print(fmt % (prefix, conn[0], conn[1]))
 
 def activate(names):
     connections = NetworkManager.Settings.ListConnections()
@@ -81,10 +82,10 @@ def activate(names):
         NetworkManager.NetworkManager.Enable(True)
     for n in names:
         if n not in connections:
-            print >>sys.stderr, "No such connection: %s" % n
+            print("No such connection: %s" % n, file=sys.stderr)
             sys.exit(1)
 
-        print "Activating connection '%s'" % n
+        print("Activating connection '%s'" % n)
         conn = connections[n]
         ctype = conn.GetSettings()['connection']['type']
         if ctype == 'vpn':
@@ -92,7 +93,7 @@ def activate(names):
                 if dev.State == NetworkManager.NM_DEVICE_STATE_ACTIVATED and dev.Managed:
                     break
             else:
-                print >>sys.stderr, "No active, managed device found"
+                print("No active, managed device found", file=sys.stderr)
                 sys.exit(1)
         else:
             dtype = {
@@ -112,7 +113,7 @@ def activate(names):
                 if dev.DeviceType == dtype and dev.State == NetworkManager.NM_DEVICE_STATE_DISCONNECTED:
                     break
             else:
-                print >>sys.stderr, "No suitable and available %s device found" % ctype
+                print("No suitable and available %s device found" % ctype, file=sys.stderr)
                 sys.exit(1)
 
         NetworkManager.NetworkManager.ActivateConnection(conn, dev, "/")
@@ -123,16 +124,16 @@ def deactivate(names):
 
     for n in names:
         if n not in active:
-            print >>sys.stderr, "No such connection: %s" % n
+            print("No such connection: %s" % n, file=sys.stderr)
             sys.exit(1)
 
-        print "Deactivating connection '%s'" % n
+        print("Deactivating connection '%s'" % n)
         NetworkManager.NetworkManager.DeactivateConnection(active[n])
 
 def offline():
     try:
         NetworkManager.NetworkManager.Enable(False)
-    except DBusException, e:
+    except DBusException as e:
         if e.get_dbus_name() != 'org.freedesktop.NetworkManager.AlreadyEnabledOrDisabled':
             raise
 
@@ -140,14 +141,14 @@ connection_types = ['wireless','wwan','wimax']
 def enable(names):
     for n in names:
         if n not in connection_types:
-            print >>sys.stderr, "No such connection type: %s" % n
+            print("No such connection type: %s" % n, file=sys.stderr)
             sys.exit(1)
         setattr(NetworkManager.NetworkManager, n.title() + 'Enabled', True)
 
 def disable(names):
     for n in names:
         if n not in connection_types:
-            print >>sys.stderr, "No such connection type: %s" % n
+            print("No such connection type: %s" % n, file=sys.stderr)
             sys.exit(1)
         setattr(NetworkManager.NetworkManager, n.title() + 'Enabled', False)
 
@@ -157,32 +158,32 @@ def info(names):
 
     for n in names:
         if n not in connections:
-            print >>sys.stderr, "No such connection: %s" % n
+            print("No such connection: %s" % n, file=sys.stderr)
 
         line = "Info about '%s'" % n
-        print line + "\n" + '=' * len(line)
+        print(line + "\n" + '=' * len(line))
         conn = connections[n]
-        print "Type:", conn['connection']['type']
-        print "Connect automatically:", ["No","Yes"][conn['connection'].get('autoconnect', True)]
-        print "Last connected on:", str(datetime.datetime.fromtimestamp(conn['connection']['timestamp']))
-        print "IPv4 settings (%s)" % conn['ipv4']['method']
-        print "  Address(es):", auto(ipv4s(conn['ipv4']['addresses']))
-        print "  DNS servers:", auto(ipv4s(conn['ipv4']['dns']))
-        print "  Routes:", auto(routes(conn['ipv4']['routes']))
-        print "  Can be default route:", ["Yes","No"][conn['ipv4'].get('never-default', False)]
+        print("Type:", conn['connection']['type'])
+        print("Connect automatically:", ["No","Yes"][conn['connection'].get('autoconnect', True)])
+        print("Last connected on:", str(datetime.datetime.fromtimestamp(conn['connection']['timestamp'])))
+        print("IPv4 settings (%s)" % conn['ipv4']['method'])
+        print("  Address(es):", auto(ipv4s(conn['ipv4']['addresses'])))
+        print("  DNS servers:", auto(ipv4s(conn['ipv4']['dns'])))
+        print("  Routes:", auto(routes(conn['ipv4']['routes'])))
+        print("  Can be default route:", ["Yes","No"][conn['ipv4'].get('never-default', False)])
 
         if conn['connection']['type'] == '802-3-ethernet':
-            print "Physical link"
-            print "  MAC address:", mac(conn['802-3-ethernet'].get('mac-address'))
+            print("Physical link")
+            print("  MAC address:", mac(conn['802-3-ethernet'].get('mac-address')))
         elif conn['connection']['type'] == '802-11-wireless':
-            print "Wireless link"
-            print "  MAC address:", mac(conn['802-11-wireless'].get('mac-address'))
-            print "  SSID:", ssid(conn['802-11-wireless']['ssid'])
-            print "  Wireless security:", conn[conn['802-11-wireless']['security']]['key-mgmt']
+            print("Wireless link")
+            print("  MAC address:", mac(conn['802-11-wireless'].get('mac-address')))
+            print("  SSID:", ssid(conn['802-11-wireless']['ssid']))
+            print("  Wireless security:", conn[conn['802-11-wireless']['security']]['key-mgmt'])
         elif conn['connection']['type'] == 'vpn':
-            print "VPN"
-            print "  Type:", conn['vpn']['service-type'].rsplit('.',1)[-1]
-            print "  Remote:", conn['vpn']['data']['remote']
+            print("VPN")
+            print("  Type:", conn['vpn']['service-type'].rsplit('.',1)[-1])
+            print("  Remote:", conn['vpn']['data']['remote'])
 
 def dump(names):
     connections = [x.GetSettings() for x in NetworkManager.Settings.ListConnections()]
@@ -190,7 +191,7 @@ def dump(names):
 
     for n in names:
         if n not in connections:
-            print >>sys.stderr, "No such connection: %s" % n
+            print("No such connection: %s" % n, file=sys.stderr)
 
         from pprint import pprint
         pprint(connections[n])

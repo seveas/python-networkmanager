@@ -24,9 +24,9 @@ try:
     sock.connect(('localhost', LOCALPORT))
 except socket.error:
     # Set up the SSH tunnel if it isn't
-    print "Connecting to " + SSH_HOST
+    print("Connecting to " + SSH_HOST)
     if subprocess.call([SSH, '-L%s:%s' % (LOCALPORT, VPN_HOST), '-f', '-n', '-N', SSH_HOST]) != 0:
-        print >>sys.stderr, "SSH to %s failed" % SSH_HOST
+        print("SSH to %s failed" % SSH_HOST)
         sys.exit(1)
 
 for conn in NetworkManager.Settings.ListConnections():
@@ -37,14 +37,14 @@ for conn in NetworkManager.Settings.ListConnections():
         uuid = settings['connection']['uuid']
         break
 else:
-    print >>sys.stderr, "VPN with name %s not found" % VPN_NAME
+    print("VPN with name %s not found" % VPN_NAME)
     sys.exit(1)
 
 # Bail out of another vpn is active
 for conn in NetworkManager.NetworkManager.ActiveConnections:
     if conn.Vpn:
         vid = conn.Connection.GetSettings()['connection']['id']
-        print >>sys.stderr, "The vpn %s is already active" % vid
+        print("The vpn %s is already active" % vid)
         sys.exit(1)
 
 # Activate VPN
@@ -52,8 +52,8 @@ for dev in NetworkManager.NetworkManager.GetDevices():
     if dev.State == NetworkManager.NM_DEVICE_STATE_ACTIVATED and dev.Managed:
         break
 else:
-    print >>sys.stderr, "No active, managed device found"
+    print("No active, managed device found")
     sys.exit(1)
 
-print "Activating VPN"
+print("Activating VPN")
 NetworkManager.NetworkManager.ActivateConnection(vpn, dev, "/")
