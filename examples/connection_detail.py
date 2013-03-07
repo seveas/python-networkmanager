@@ -2,8 +2,6 @@
 Display detailed information about currently active connections.
 """
 import NetworkManager
-import socket
-import struct
 
 c = NetworkManager.const
 
@@ -22,8 +20,6 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
     for key, val in sorted(settings.items()):
         print("   %s" % key)
         for name, value in val.items():
-            if name == 'ssid':
-                value = "".join([str(x) for x in value])
             print(format % (name, value))
     for dev in conn.Devices:
         print("Device: %s" % dev.Interface)
@@ -35,12 +31,10 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
         print("   IPv4 config")
         print("      Addresses")
         for addr in dev.Ip4Config.Addresses:
-            print("         %s/%d -> %s" % (socket.inet_ntoa(struct.pack('L', addr[0])), addr[1],
-                                            socket.inet_ntoa(struct.pack('L', addr[2]))))
+            print("         %s/%d -> %s" % addr)
         print("      Routes")
-        for addr in dev.Ip4Config.Routes:
-            print("         %s/%d -> %s (%d)" % (socket.inet_ntoa(struct.pack('L', route[0])), route[1],
-                                                 socket.inet_ntoa(struct.pack('L', route[2])), socket.ntohl(route[3])))
+        for route in dev.Ip4Config.Routes:
+            print("         %s/%d -> %s (%d)" % route)
         print("      Nameservers")
         for ns in dev.Ip4Config.Nameservers:
-            print("         %s" % socket.inet_ntoa(struct.pack('L', ns)))
+            print("         %s" % ns)

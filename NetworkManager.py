@@ -1,8 +1,12 @@
 import dbus
+import socket
+import struct
 import sys
 
 if sys.version_info >= (3,0):
     basestring = str
+if not hasattr(__builtins__, 'bytes'):
+    bytes = chr
 
 class NMDbusInterface(object):
     bus = dbus.SystemBus()
@@ -30,9 +34,11 @@ class NMDbusInterface(object):
 
     def _make_property(self, name):
         def get(self):
-            return self.unwrap(self.proxy.Get(self.interface_name, name,
+            data = self.unwrap(self.proxy.Get(self.interface_name, name,
                                   dbus_interface='org.freedesktop.DBus.Properties'))
+            return self.postprocess(name, data)
         def set(self, value):
+            data = self.preprocess(name, data)
             return self.proxy.Set(self.interface_name, name, self.wrap(value),
                                   dbus_interface='org.freedesktop.DBus.Properties')
         return property(get, set)
@@ -58,8 +64,10 @@ class NMDbusInterface(object):
             return bool(val)
         if isinstance(val, (dbus.Int16, dbus.UInt16, dbus.Int32, dbus.UInt32, dbus.Int64, dbus.UInt64)):
             return int(val)
+        if isinstance(val, dbus.Byte):
+            return bytes(int(val))
         return val
-    
+
     def wrap(self, val):
         if isinstance(val, NMDbusInterface):
             return val.object_path
@@ -78,8 +86,9 @@ class NMDbusInterface(object):
                 func = getattr(self.interface, name)
                 args = self.wrap(args)
                 kwargs = self.wrap(kwargs)
-                ret = func(*args, **kwargs)
-                return self.unwrap(ret)
+                args, kwargs = self.preprocess(name, args, kwargs)
+                ret = self.unwrap(func(*args, **kwargs))
+                return self.postprocess(name, ret)
             return proxy_call
 
     def connect_to_signal(self, signal, handler, *args, **kwargs):
@@ -89,6 +98,12 @@ class NMDbusInterface(object):
         args = self.wrap(args)
         kwargs = self.wrap(kwargs)
         return self.proxy.connect_to_signal(signal, helper, *args, **kwargs)
+
+    def postprocess(self, name, val):
+        return val
+
+    def preprocess(self, name, args, kwargs):
+        return args, kwargs
 
 class NetworkManager(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager'
@@ -102,6 +117,28 @@ Settings = Settings()
 
 class Connection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Settings.Connection'
+
+    def postprocess(self, name, val):
+        # SSID is sent as bytes, make it a string
+        if name == 'GetSettings':
+            if 'ssid' in val.get('802-11-wireless', {}):
+                val['802-11-wireless']['ssid'] = "".join(val['802-11-wireless']['ssid'])
+            for key in val:
+                val_ = val[key]
+                if 'mac-address' in val_:
+                    val_['mac-address'] = "%02X:%02X:%02X:%02X:%02X:%02X" % tuple([ord(x) for x in val_['mac-address']])
+                if 'bssid' in val_:
+                    val_['bssid'] = "%02X:%02X:%02X:%02X:%02X:%02X" % tuple([ord(x) for x in val_['bssid']])
+            if 'ipv4' in val:
+                val['ipv4']['addresses'] = [(socket.inet_ntoa(struct.pack('L', addr[0])),
+                    addr[1], socket.inet_ntoa(struct.pack('L', addr[2])))
+                    for addr in val['ipv4']['addresses']]
+                val['ipv4']['routes'] = [(socket.inet_ntoa(struct.pack('L', route[0])),
+                    route[1], socket.inet_ntoa(struct.pack('L', route[2])),
+                    socket.ntohl(route[3])) for route in val['ipv4']['routes']]
+                val['ipv4']['dns'] = [socket.inet_ntoa(struct.pack('L', addr))
+                    for addr in val['ipv4']['dns']]
+        return val
 
 class ActiveConnection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Connection.Active'
@@ -142,6 +179,19 @@ class OlpcMesh(NMDbusInterface):
 
 class IP4Config(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.IP4Config'
+
+    def postprocess(self, name, val):
+        if name == 'Addresses':
+            return [(socket.inet_ntoa(struct.pack('L', addr[0])),
+                addr[1], socket.inet_ntoa(struct.pack('L', addr[2])))
+                for addr in val]
+        if name == 'Routes':
+            return [(socket.inet_ntoa(struct.pack('L', route[0])),
+                route[1], socket.inet_ntoa(struct.pack('L', route[2])),
+                socket.ntohl(route[3])) for route in val]
+        if name in ('Nameservers', 'WinsServers'):
+            return [socket.inet_ntoa(struct.pack('L', addr)) for addr in val]
+        return val
 
 class IP6Config(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.IP6Config'

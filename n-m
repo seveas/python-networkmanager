@@ -167,18 +167,18 @@ def info(names):
         print("Connect automatically:", ["No","Yes"][conn['connection'].get('autoconnect', True)])
         print("Last connected on:", str(datetime.datetime.fromtimestamp(conn['connection']['timestamp'])))
         print("IPv4 settings (%s)" % conn['ipv4']['method'])
-        print("  Address(es):", auto(ipv4s(conn['ipv4']['addresses'])))
-        print("  DNS servers:", auto(ipv4s(conn['ipv4']['dns'])))
-        print("  Routes:", auto(routes(conn['ipv4']['routes'])))
+        print("  Address(es):", ', '.join([x[0] for x in conn['ipv4']['addresses']]) or '(Automatic)')
+        print("  DNS servers:",  ', '.join(conn['ipv4']['dns']) or '(Automatic)')
+        print("  Routes:", ", ".join(["%s/%d -> %s" % x[:3] for x in conn['ipv4']['routes']]))
         print("  Can be default route:", ["Yes","No"][conn['ipv4'].get('never-default', False)])
 
         if conn['connection']['type'] == '802-3-ethernet':
             print("Physical link")
-            print("  MAC address:", mac(conn['802-3-ethernet'].get('mac-address')))
+            print("  MAC address:", conn['802-3-ethernet'].get('mac-address', '(Automatic)'))
         elif conn['connection']['type'] == '802-11-wireless':
             print("Wireless link")
-            print("  MAC address:", mac(conn['802-11-wireless'].get('mac-address')))
-            print("  SSID:", ssid(conn['802-11-wireless']['ssid']))
+            print("  MAC address:", conn['802-11-wireless'].get('mac-address', '(Automatic)'))
+            print("  SSID:", conn['802-11-wireless']['ssid'])
             print("  Wireless security:", conn[conn['802-11-wireless']['security']]['key-mgmt'])
         elif conn['connection']['type'] == 'vpn':
             print("VPN")
@@ -195,24 +195,6 @@ def dump(names):
 
         from pprint import pprint
         pprint(connections[n])
-
-def auto(seq):
-    return "(Automatic)" if not seq else ", ".join(seq)
-
-def ipv4(ip):
-    return socket.inet_ntoa(struct.pack('L',ip))
-
-def ipv4s(seq):
-    return [ipv4(x) for x in seq]
-
-def routes(seq):
-    return ["%s/%d -> %s" % (ipv4(x[0]), x[1], ipv4(x[2])) for x in seq]
-
-def mac(seq):
-    return "(Automatic)" if not seq else "%X:%X:%X:%X:%X:%X" % tuple(seq)
-
-def ssid(seq):
-    return "".join([chr(x) for x in seq])
 
 if __name__ == '__main__':
     main()
