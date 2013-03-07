@@ -1,4 +1,4 @@
-python-networkmanager Easy communication with NetworkManager 
+python-networkmanager Easy communication with NetworkManager
 ============================================================
 
 python-networkmanager wraps NetworkManagers D-Bus interface so you can be less

@@ -13,7 +13,7 @@ As of version 0.9.2, python-networkmanager also ships a command-line utility
 called n-m, which allows you to manipulate NetworkManager's state from the
 command line.
 
-:mod:`NetworkManager` -- Easy communication with NetworkManager 
+:mod:`NetworkManager` -- Easy communication with NetworkManager
 ---------------------------------------------------------------
 .. module:: NetworkManager
    :platform: Linux systems with NetworkManager 0.90
@@ -41,7 +41,7 @@ features to standard D-Bus interfaces:
 * All D-Bus properties are exposed as python properties
 * Return values are automatically unwrapped (so no more :data:`dbus.String`)
 * Object paths in return values are automatically replaced with proxy objects,
-  so you don't need to do that manually 
+  so you don't need to do that manually
 * ...and vice versa when sending
 * And also when receiving signals
 

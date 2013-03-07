@@ -27,7 +27,7 @@ else:
         'gsm': NetworkManager.NM_DEVICE_TYPE_MODEM,
     }.get(ctype,ctype)
     devices = NetworkManager.NetworkManager.GetDevices()
-    
+
     for dev in devices:
         if dev.DeviceType == dtype and dev.State == NetworkManager.NM_DEVICE_STATE_DISCONNECTED:
             break

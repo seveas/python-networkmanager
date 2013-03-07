@@ -13,7 +13,7 @@ import sys
 
 VPN_NAME   = 'MyVpn'
 SSH_HOST   = 'my.ssh.bastion.host.com'
-VPN_HOST   = 'my.internal.vpn.host.com:1194' 
+VPN_HOST   = 'my.internal.vpn.host.com:1194'
 LOCALPORT  = 1195
 SSH        = '/usr/bin/ssh'
 
