@@ -163,6 +163,11 @@ class Device(NMDbusInterface):
 class AccessPoint(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.AccessPoint'
 
+    def postprocess(self, name, val):
+        # SSID is sent as bytes, make it a string
+        if name == 'Ssid':
+            return "".join(val)
+
 class Wired(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Wired'
 

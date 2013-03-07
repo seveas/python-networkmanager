@@ -38,6 +38,9 @@ def main():
     elif args[0] == 'offline':
         offline()
 
+    elif args[0] == 'visible':
+        visible()
+
     elif len(args) < 2:
         p.print_help()
         sys.exit(1)
@@ -186,6 +189,7 @@ def info(names):
             print("  Remote:", conn['vpn']['data']['remote'])
 
 def dump(names):
+    from pprint import pprint
     connections = [x.GetSettings() for x in NetworkManager.Settings.ListConnections()]
     connections = dict([(x['connection']['id'], x) for x in connections])
 
@@ -193,8 +197,19 @@ def dump(names):
         if n not in connections:
             print("No such connection: %s" % n, file=sys.stderr)
 
-        from pprint import pprint
         pprint(connections[n])
+
+def visible():
+    for device in NetworkManager.NetworkManager.GetDevices():
+        if device.DeviceType != NetworkManager.NM_DEVICE_TYPE_WIFI:
+            continue
+        print("Visible on %s" % device.Udi[device.Udi.rfind('/')+1:])
+        device = device.SpecificDevice()
+        active = device.ActiveAccessPoint
+        aps = device.GetAccessPoints()
+        for ap in aps:
+            prefix = '* ' if ap.object_path == active.object_path else '  '
+            print("%s %s" % (prefix, ap.Ssid))
 
 if __name__ == '__main__':
     main()
