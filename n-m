@@ -24,6 +24,8 @@ import socket
 import struct
 import sys
 
+PY3 = sys.version_info[0] >= 3
+
 def main():
     p = optparse.OptionParser(usage=usage)
     opts, args = p.parse_args()
@@ -160,15 +162,21 @@ def info(names):
     connections = dict([(x['connection']['id'], x) for x in connections])
 
     for n in names:
+        if not PY3:
+            n = n.decode('utf-8')
         if n not in connections:
             print("No such connection: %s" % n, file=sys.stderr)
+            return
 
         line = "Info about '%s'" % n
         print(line + "\n" + '=' * len(line))
         conn = connections[n]
         print("Type:", conn['connection']['type'])
         print("Connect automatically:", ["No","Yes"][conn['connection'].get('autoconnect', True)])
-        print("Last connected on:", str(datetime.datetime.fromtimestamp(conn['connection']['timestamp'])))
+        if 'timestamp' in conn['connection']:
+            print("Last connected on:", str(datetime.datetime.fromtimestamp(conn['connection']['timestamp'])))
+        else:
+            print("Never connected")
         print("IPv4 settings (%s)" % conn['ipv4']['method'])
         print("  Address(es):", ', '.join([x[0] for x in conn['ipv4']['addresses']]) or '(Automatic)')
         print("  DNS servers:",  ', '.join(conn['ipv4']['dns']) or '(Automatic)')

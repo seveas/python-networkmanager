@@ -3,10 +3,12 @@ import socket
 import struct
 import sys
 
-if sys.version_info >= (3,0):
+PY3 = sys.version_info >= (3,0)
+if PY3:
     basestring = str
-if not hasattr(__builtins__, 'bytes'):
-    bytes = chr
+    unicode = str
+elif not hasattr(__builtins__, 'bytes'):
+    bytes = lambda x, y=None: chr(x[0]) if x else x
 
 class NMDbusInterface(object):
     bus = dbus.SystemBus()
@@ -59,13 +61,13 @@ class NMDbusInterface(object):
                 }.get(classname, classname)
                 return globals()[classname](val)
         if isinstance(val, (dbus.Signature, dbus.String)):
-            return str(val)
+            return unicode(val)
         if isinstance(val, dbus.Boolean):
             return bool(val)
         if isinstance(val, (dbus.Int16, dbus.UInt16, dbus.Int32, dbus.UInt32, dbus.Int64, dbus.UInt64)):
             return int(val)
         if isinstance(val, dbus.Byte):
-            return bytes(int(val))
+            return bytes([int(val)])
         return val
 
     def wrap(self, val):
@@ -122,7 +124,7 @@ class Connection(NMDbusInterface):
         # SSID is sent as bytes, make it a string
         if name == 'GetSettings':
             if 'ssid' in val.get('802-11-wireless', {}):
-                val['802-11-wireless']['ssid'] = "".join(val['802-11-wireless']['ssid'])
+                val['802-11-wireless']['ssid'] = bytes("",'ascii').join(val['802-11-wireless']['ssid']).decode('utf-8')
             for key in val:
                 val_ = val[key]
                 if 'mac-address' in val_:
