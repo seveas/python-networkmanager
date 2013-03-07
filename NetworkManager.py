@@ -150,10 +150,14 @@ class Device(NMDbusInterface):
         return {
             NM_DEVICE_TYPE_ETHERNET: Wired,
             NM_DEVICE_TYPE_WIFI: Wireless,
+            NM_DEVICE_TYPE_MODEM: Modem,
             NM_DEVICE_TYPE_BT: Bluetooth,
             NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
             NM_DEVICE_TYPE_WIMAX: Wimax,
-            NM_DEVICE_TYPE_MODEM: Modem,
+            NM_DEVICE_TYPE_INFINIBAND: Infiniband,
+            NM_DEVICE_TYPE_BOND: Bond,
+            NM_DEVICE_TYPE_VLAN: Vlan,
+            NM_DEVICE_TYPE_ADSL: Adsl,
         }[self.DeviceType](self.object_path)
 
 class AccessPoint(NMDbusInterface):
@@ -171,11 +175,29 @@ class Modem(NMDbusInterface):
 class Bluetooth(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Bluetooth'
 
+class OlpcMesh(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.OlpcMesh'
+
 class Wimax(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Wimax'
 
-class OlpcMesh(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.OlpcMesh'
+class Infiniband(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Infiniband'
+
+class Bond(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Bond'
+
+class Bridge(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Bridge'
+
+class Vlan(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Vlan'
+
+class Adsl(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.adsl'
+
+class NSP(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Wimax.NSP'
 
 class IP4Config(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.IP4Config'
@@ -196,9 +218,23 @@ class IP4Config(NMDbusInterface):
 class IP6Config(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.IP6Config'
 
+class DHCP4Config(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.DHCP4Config'
+
+class DHCP6Config(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.DHCP6Config'
+
+class AgentManager(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.AgentManager'
+
+class SecretAgent(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.SecretAgent'
+
 class VPNConnection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.VPN.Connection'
 
+class VPNPlugin(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.VPN.Plugin'
 
 def const(prefix, val):
     prefix = 'NM_' + prefix.upper() + '_'
@@ -230,6 +266,7 @@ NM_DEVICE_TYPE_MODEM = 8
 NM_DEVICE_TYPE_INFINIBAND = 9
 NM_DEVICE_TYPE_BOND = 10
 NM_DEVICE_TYPE_VLAN = 11
+NM_DEVICE_TYPE_ADSL = 12
 NM_DEVICE_CAP_NONE = 0
 NM_DEVICE_CAP_NM_SUPPORTED = 1
 NM_DEVICE_CAP_CARRIER_DETECT = 2
@@ -241,6 +278,7 @@ NM_WIFI_DEVICE_CAP_CIPHER_CCMP = 8
 NM_WIFI_DEVICE_CAP_WPA = 16
 NM_WIFI_DEVICE_CAP_RSN = 32
 NM_WIFI_DEVICE_CAP_AP = 64
+NM_WIFI_DEVICE_CAP_IBSS_RSN = 128
 NM_802_11_AP_FLAGS_NONE = 0
 NM_802_11_AP_FLAGS_PRIVACY = 1
 NM_802_11_AP_SEC_NONE = 0
@@ -329,6 +367,7 @@ NM_DEVICE_STATE_REASON_GSM_SIM_PUK_REQUIRED = 47
 NM_DEVICE_STATE_REASON_GSM_SIM_WRONG = 48
 NM_DEVICE_STATE_REASON_INFINIBAND_MODE = 49
 NM_DEVICE_STATE_REASON_DEPENDENCY_FAILED = 50
+NM_DEVICE_STATE_REASON_BR2684_FAILED = 51
 NM_DEVICE_STATE_REASON_LAST = 65535
 NM_ACTIVE_CONNECTION_STATE_UNKNOWN = 0
 NM_ACTIVE_CONNECTION_STATE_ACTIVATING = 1
