@@ -126,29 +126,27 @@ class Settings(NMDbusInterface):
     def preprocess(self, name, args, kwargs):
         if name == 'AddConnection':
             settings = args[0]
+            for key in settings:
+                if 'mac-address' in settings[key]:
+                    settings[key]['mac-address'] = fixup.mac_to_dbus(settings['key']['mac-address'])
+                if 'bssid' in settings[key]:
+                    settings[key]['bssid'] = fixup.mac_to_dbus(settings['key']['mac-address'])
             if 'ssid' in settings.get('802-11-wireless', {}):
-                ssid = settings['802-11-wireless']['ssid']
-                if isinstance(ssid, unicode):
-                    ssid = ssid.encode('utf-8')
-                ssid = [dbus.Byte(x) for x in ssid]
-                settings['802-11-wireless']['ssid'] = ssid
+                settings['802-11-wireless']['ssid'] = fixups.ssid_to_dbus(settings['802-11-wireless']['ssid'])
             if 'ipv4' in settings:
-                settings['ipv4']['addresses'] = [(struct.unpack('L', socket.inet_aton(addr[0])),
-                    addr[1], struct.unpack('L', socket.inet_aton(addr[2])))
-                    for addr in settings['ipv4']['addresses']]
-                settings['ipv4']['routes'] = [(struct.unpack('L', socket.inet_aton(route[0])),
-                    route[1], struct.unpack('L', socket.inet_aton(route[2])),
-                    socket.htonl(route[3])) for route in settings['ipv4']['routes']]
-                settings['ipv4']['dns'] = [struct.unpack('L', socket.inet_aton(addr))
-                    for addr in settings['ipv4']['dns']]
+                if 'addresses' in settings['ipv4']:
+                    settings['ipv4']['addresses'] = [fixups.addrconf_to_dbus(addr) for addr in settings['ipv4']['addresses']]
+                if 'routes' in settings['ipv4']:
+                    settings['ipv4']['routes'] = [fixups.route_to_dbus(route) for route in settings['ipv4']['routes']]
+                if 'dns' in settings['ipv4']:
+                    settings['ipv4']['dns'] = [fixups.addr_to_dbus(addr) for addr in settings['ipv4']['dns']]
         return args, kwargs
 
 Settings = Settings()
 
 class Connection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Settings.Connection'
-    has_secrets = ['802-1x', '802-11-wireless-security', 'cdma',
-        'gsm', 'pppoe', 'vpn']
+    has_secrets = ['802-1x', '802-11-wireless-security', 'cdma', 'gsm', 'pppoe', 'vpn']
 
     def GetSecrets(self, name=None):
         if name == None:
@@ -165,22 +163,17 @@ class Connection(NMDbusInterface):
         # SSID is sent as bytes, make it a string
         if name == 'GetSettings':
             if 'ssid' in val.get('802-11-wireless', {}):
-                val['802-11-wireless']['ssid'] = bytes("",'ascii').join(val['802-11-wireless']['ssid']).decode('utf-8')
+                val['802-11-wireless']['ssid'] = fixups.ssid_to_python(val['802-11-wireless']['ssid'])
             for key in val:
                 val_ = val[key]
                 if 'mac-address' in val_:
-                    val_['mac-address'] = "%02X:%02X:%02X:%02X:%02X:%02X" % tuple([ord(x) for x in val_['mac-address']])
+                    val_['mac-address'] = fixups.mac_to_python(val_['mac-address'])
                 if 'bssid' in val_:
-                    val_['bssid'] = "%02X:%02X:%02X:%02X:%02X:%02X" % tuple([ord(x) for x in val_['bssid']])
+                    val_['bssid'] = fixups.mac_to_python(val_['bssid'])
             if 'ipv4' in val:
-                val['ipv4']['addresses'] = [(socket.inet_ntoa(struct.pack('L', addr[0])),
-                    addr[1], socket.inet_ntoa(struct.pack('L', addr[2])))
-                    for addr in val['ipv4']['addresses']]
-                val['ipv4']['routes'] = [(socket.inet_ntoa(struct.pack('L', route[0])),
-                    route[1], socket.inet_ntoa(struct.pack('L', route[2])),
-                    socket.ntohl(route[3])) for route in val['ipv4']['routes']]
-                val['ipv4']['dns'] = [socket.inet_ntoa(struct.pack('L', addr))
-                    for addr in val['ipv4']['dns']]
+                val['ipv4']['addresses'] = [fixups.addrconf_to_python(addr) for addr in val['ipv4']['addresses']]
+                val['ipv4']['routes'] = [fixups.route_to_python(route) for route in val['ipv4']['routes']]
+                val['ipv4']['dns'] = [fixups.addr_to_python(addr) for addr in val['ipv4']['dns']]
         return val
 
 class ActiveConnection(NMDbusInterface):
@@ -209,7 +202,7 @@ class AccessPoint(NMDbusInterface):
     def postprocess(self, name, val):
         # SSID is sent as bytes, make it a string
         if name == 'Ssid':
-            return "".join(val)
+            return fixups.ssid_to_python(val)
 
 class Wired(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Wired'
@@ -252,15 +245,11 @@ class IP4Config(NMDbusInterface):
 
     def postprocess(self, name, val):
         if name == 'Addresses':
-            return [(socket.inet_ntoa(struct.pack('L', addr[0])),
-                addr[1], socket.inet_ntoa(struct.pack('L', addr[2])))
-                for addr in val]
+            return [fixups.addrconf_to_python(addr) for addr in val]
         if name == 'Routes':
-            return [(socket.inet_ntoa(struct.pack('L', route[0])),
-                route[1], socket.inet_ntoa(struct.pack('L', route[2])),
-                socket.ntohl(route[3])) for route in val]
+            return [fixups.route_to_python(route) for route in val]
         if name in ('Nameservers', 'WinsServers'):
-            return [socket.inet_ntoa(struct.pack('L', addr)) for addr in val]
+            return [fixups.add_to_python(addr) for addr in val]
         return val
 
 class IP6Config(NMDbusInterface):
@@ -292,6 +281,71 @@ def const(prefix, val):
         if key.startswith(prefix) and val == vval:
             return key.replace(prefix,'').lower()
     raise ValueError("No constant found for %s* with value %d", (prefix, val))
+
+class fixups(object):
+    @staticmethod
+    def ssid_to_python(ssid):
+        return bytes("",'ascii').join(ssid).decode('utf-8')
+
+    @staticmethod
+    def ssid_to_dbus(ssid):
+        if isinstance(ssid, unicode):
+            ssid = ssid.encode('utf-8')
+        return [dbus.Byte(x) for x in ssid]
+
+    @staticmethod
+    def mac_to_python(mac):
+        return "%02X:%02X:%02X:%02X:%02X:%02X" % tuple([ord(x) for x in mac])
+
+    @staticmethod
+    def mac_to_dbus(mac):
+        return [dbus.Byte(int(x, 16)) for x in mac.split(':')]
+
+    @staticmethod
+    def addrconf_to_python(addrconf):
+        addr, netmask, gateway = addrconf
+        return [
+            fixups.addr_to_python(addr),
+            netmask,
+            fixups.addr_to_python(gateway)
+        ]
+
+    @staticmethod
+    def addrconf_to_dbus(addrconf):
+        addr, netmask, gateway = addrconf
+        return [
+            fixups.addr_to_dbus(addr),
+            netmask,
+            fixups.addr_to_dbus(gateway)
+        ]
+
+    @staticmethod
+    def addr_to_python(addr):
+        return socket.inet_ntoa(struct.pack('L', addr))
+
+    @staticmethod
+    def addr_to_dbus(addr):
+        return struct.unpack('L', socket.inet_aton(addr))
+
+    @staticmethod
+    def route_to_python(route):
+        addr, netmask, gateway, metric = route
+        return [
+            fixups.addr_to_python(addr),
+            netmask,
+            fixups.addr_to_python(gateway),
+            socket.ntohl(metric)
+        ]
+
+    @staticmethod
+    def route_to_dbus(route):
+        addr, netmask, gateway, metric = route
+        return [
+            fixups.addr_to_dbus(addr),
+            netmask,
+            fixups.addr_to_dbus(gateway),
+            socket.htonl(metric)
+        ]
 
 # Constants below are generated with makeconstants.py. Do not edit manually.
 NM_STATE_UNKNOWN = 0
