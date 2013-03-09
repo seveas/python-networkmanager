@@ -84,14 +84,17 @@ class NMDbusInterface(object):
         try:
             return super(NMDbusInterface, self).__getattribute__(name)
         except AttributeError:
-            def proxy_call(*args, **kwargs):
-                func = getattr(self.interface, name)
-                args = self.wrap(args)
-                kwargs = self.wrap(kwargs)
-                args, kwargs = self.preprocess(name, args, kwargs)
-                ret = self.unwrap(func(*args, **kwargs))
-                return self.postprocess(name, ret)
-            return proxy_call
+            return self.make_proxy_call(name)
+
+    def make_proxy_call(self, name):
+        def proxy_call(*args, **kwargs):
+            func = getattr(self.interface, name)
+            args = self.wrap(args)
+            kwargs = self.wrap(kwargs)
+            args, kwargs = self.preprocess(name, args, kwargs)
+            ret = self.unwrap(func(*args, **kwargs))
+            return self.postprocess(name, ret)
+        return proxy_call
 
     def connect_to_signal(self, signal, handler, *args, **kwargs):
         def helper(*args, **kwargs):
@@ -119,6 +122,19 @@ Settings = Settings()
 
 class Connection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Settings.Connection'
+    has_secrets = ['802-1x', '802-11-wireless-security', 'cdma',
+        'gsm', 'pppoe', 'vpn']
+
+    def GetSecrets(self, name=None):
+        if name == None:
+            settings = self.GetSettings()
+            for key in self.has_secrets:
+                if key in settings:
+                    name = key
+                    break
+            else:
+                return {}
+        return self.make_proxy_call('GetSecrets')(name)
 
     def postprocess(self, name, val):
         # SSID is sent as bytes, make it a string

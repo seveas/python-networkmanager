@@ -198,8 +198,13 @@ def info(names):
 
 def dump(names):
     from pprint import pprint
-    connections = [x.GetSettings() for x in NetworkManager.Settings.ListConnections()]
-    connections = dict([(x['connection']['id'], x) for x in connections])
+    connections = {}
+    for conn in NetworkManager.Settings.ListConnections():
+        settings = conn.GetSettings()
+        secrets = conn.GetSecrets()
+        for key in secrets:
+            settings[key].update(secrets[key])
+        connections[settings['connection']['id']] = settings
 
     for n in names:
         if n not in connections:
