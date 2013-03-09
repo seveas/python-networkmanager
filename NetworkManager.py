@@ -73,6 +73,10 @@ class NMDbusInterface(object):
     def wrap(self, val):
         if isinstance(val, NMDbusInterface):
             return val.object_path
+        if hasattr(val, 'mro'):
+            for klass in val.mro():
+                if klass.__module__ == '_dbus_bindings':
+                    return val
         if hasattr(val, '__iter__') and not isinstance(val, basestring):
             if hasattr(val, 'items'):
                 return dict([(x, self.wrap(y)) for x, y in val.items()])
@@ -118,6 +122,27 @@ NetworkManager = NetworkManager()
 class Settings(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Settings'
     object_path = '/org/freedesktop/NetworkManager/Settings'
+
+    def preprocess(self, name, args, kwargs):
+        if name == 'AddConnection':
+            settings = args[0]
+            if 'ssid' in settings.get('802-11-wireless', {}):
+                ssid = settings['802-11-wireless']['ssid']
+                if isinstance(ssid, unicode):
+                    ssid = ssid.encode('utf-8')
+                ssid = [dbus.Byte(x) for x in ssid]
+                settings['802-11-wireless']['ssid'] = ssid
+            if 'ipv4' in settings:
+                settings['ipv4']['addresses'] = [(struct.unpack('L', socket.inet_aton(addr[0])),
+                    addr[1], struct.unpack('L', socket.inet_aton(addr[2])))
+                    for addr in settings['ipv4']['addresses']]
+                settings['ipv4']['routes'] = [(struct.unpack('L', socket.inet_aton(route[0])),
+                    route[1], struct.unpack('L', socket.inet_aton(route[2])),
+                    socket.htonl(route[3])) for route in settings['ipv4']['routes']]
+                settings['ipv4']['dns'] = [struct.unpack('L', socket.inet_aton(addr))
+                    for addr in settings['ipv4']['dns']]
+        return args, kwargs
+
 Settings = Settings()
 
 class Connection(NMDbusInterface):
