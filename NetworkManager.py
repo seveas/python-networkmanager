@@ -271,6 +271,13 @@ class SecretAgent(NMDbusInterface):
 class VPNConnection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.VPN.Connection'
 
+    def preprocess(self, name, args, kwargs):
+        conf = args[0]
+        conf['addresses'] = [fixups.addrconf_to_python(addr) for addr in conf['addresses']]
+        conf['routes'] = [fixups.route_to_python(route) for route in conf['routes']]
+        conf['dns'] = [fixups.addr_to_python(addr) for addr in conf['dns']]
+        return args, kwargs
+
 class VPNPlugin(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.VPN.Plugin'
 
