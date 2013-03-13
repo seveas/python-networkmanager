@@ -1,8 +1,11 @@
 #!/usr/bin/python
-"""
-n-m is a command-line tool to deal with network-manager. It can connect you to
-defined networks and disconnect you again.
-"""
+#
+# Command-line tool to interact with NetworkManager. With this tool, you can
+# inspect various configuration items and (de-)activate connections.
+#
+# (C) 2011-2013 Dennis Kaarsemaker
+# License: GPL3+
+
 from __future__ import print_function
 
 usage = """%prog [options] action [arguments]

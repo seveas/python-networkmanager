@@ -1,3 +1,9 @@
+# NetworkManager - a library to make interacting with the NetworkManager daemon
+# easier.
+#
+# (C)2011-2013 Dennis Kaarsemaker
+# License: GPL3+
+
 import dbus
 import socket
 import struct
@@ -160,7 +166,6 @@ class Connection(NMDbusInterface):
         return self.make_proxy_call('GetSecrets')(name)
 
     def postprocess(self, name, val):
-        # SSID is sent as bytes, make it a string
         if name == 'GetSettings':
             if 'ssid' in val.get('802-11-wireless', {}):
                 val['802-11-wireless']['ssid'] = fixups.ssid_to_python(val['802-11-wireless']['ssid'])
@@ -201,7 +206,6 @@ class AccessPoint(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.AccessPoint'
 
     def postprocess(self, name, val):
-        # SSID is sent as bytes, make it a string
         if name == 'Ssid':
             return fixups.ssid_to_python(val)
 
@@ -290,6 +294,9 @@ def const(prefix, val):
             return key.replace(prefix,'').lower()
     raise ValueError("No constant found for %s* with value %d", (prefix, val))
 
+# Several fixer methods to make the data easier to handle in python
+# - SSID sent/returned as bytes (only encoding tried is utf-8)
+# - IP, Mac address and route metric encoding/decoding
 class fixups(object):
     @staticmethod
     def ssid_to_python(ssid):

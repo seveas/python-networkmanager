@@ -1,23 +1,21 @@
-Welcome to python-networkmanager's documentation!
-=================================================
+Python API to talk to NetworkManager
+====================================
 
-python-networkmanager wraps NetworkManagers D-Bus interface so you can be less
-verbose when talking to NetworkManager from python. All interfaces have been
-wrapped in classes, properties are exposed as python properties and function
-calls are forwarded to the correct interface.
+NetworkManager provides a detailed and capable D-Bus interface on the system
+bus. You can use this interface to query NetworkManager about the overall state
+of the network and details of network devices like current IP addresses or DHCP
+options, and to activate and deactivate network connections.
 
-I wrote it to reduce a 100-line python script to 50 lines. Not realizing that
-the library has more lines than the ones I removed. Oh well 😊
+python-networkmanager takes this D-Bus interface and wraps D-Bus interfaces in
+classes and D-Bus properties in python properties. It also provides a
+command-line utility to inspect the configuration and (de-)activate
+connections.
 
-As of version 0.9.2, python-networkmanager also ships a command-line utility
-called n-m, which allows you to manipulate NetworkManager's state from the
-command line.
-
-:mod:`NetworkManager` -- Easy communication with NetworkManager
----------------------------------------------------------------
+The :mod:`NetworkManager` module
+--------------------------------
 .. module:: NetworkManager
-   :platform: Linux systems with NetworkManager 0.90
-   :synopsis: Talk to NetworkManager without being verbose
+   :platform: Linux systems with NetworkManager 0.9.x
+   :synopsis: Talk to NetworkManager from python
 
 All the code is contained in one module: :mod:`NetworkManager`. Using it is as
 simple as you think it is:
@@ -26,12 +24,23 @@ simple as you think it is:
 
   >>> import NetworkManager
   >>> NetworkManager.NetworkManager.Version
-  '0.9.1.90'
+  '0.9.6.0'
 
 NetworkManager exposes a lot of information via D-Bus and also allows full
 control of network settings. The full D-Bus API can be found on `NetworkManager
 project website`_. All interfaces listed there have been wrapped in classes as
-listed below.
+listed below. With a few exceptions, they behave exactly like the D-Bus
+methods. These exceptions are for convenience and limited to this list:
+
+* IP addresses are returned as strings of the form :data:`1.2.3.4` instead of
+  network byte ordered integers.
+* Route metrics are returned in host byte order, so you can use them as
+  integers.
+* Mac addresses and BSSIDs are always returned as strings of the form
+  :data:`00:11:22:33:44:55` instead of byte sequences.
+* Wireless SSID's are returned as strings instead of byte sequences. They will
+  be decoded as UTF-8 data, so using any other encoding for your SSID will
+  result in errors.
 
 .. class:: NMDbusInterface
 
@@ -39,7 +48,9 @@ This is the base class for all interface wrappers. It adds a few useful
 features to standard D-Bus interfaces:
 
 * All D-Bus properties are exposed as python properties
-* Return values are automatically unwrapped (so no more :data:`dbus.String`)
+* Return values are automatically converted to python basic types (so no more
+  :data:`dbus.String`, but simple :data:`str` (python 3) or :data:`unicode`
+  (python 2))
 * Object paths in return values are automatically replaced with proxy objects,
   so you don't need to do that manually
 * ...and vice versa when sending
@@ -48,7 +59,7 @@ features to standard D-Bus interfaces:
 .. function:: const(prefix, value)
 
 Many of NetworkManagers D-Bus methods expect or return numeric constants, for
-which there are enums in teh C sourece code only. These constants, such as
+which there are enums in the C source code. These constants, such as
 :data:`NM_STATE_CONNECTED_GLOBAL`, can all be found in the
 :mod:`NetworkManager` module as well. The :func:`const` function can help you
 translate them to text. For example:
@@ -60,7 +71,7 @@ translate them to text. For example:
   >>> NetworkManager.const('device_type', 2)
   'wifi'
 
-.. _`NetworkManager project website`: http://projects.gnome.org/NetworkManager/developers/migrating-to-09/spec.html
+.. _`NetworkManager project website`: projects.gnome.org/NetworkManager/developers/api/09/spec.html
 
 List of classes
 ---------------
@@ -102,9 +113,19 @@ interface.
 
 .. class:: Bluetooth
 
+.. class:: OlpcMesh
+
 .. class:: Wimax
 
-.. class:: OlpcMesh
+.. class:: Infiniband
+
+.. class:: Bond
+
+.. class:: Bridge
+
+.. class:: Vlan
+
+.. class:: Adsl
 
 These classes represent D-Bus interfaces for various types of hardware. Note
 that methods such as :data:`NetworkManager.GetDevices()` will only return
@@ -118,30 +139,50 @@ that methods such as :data:`NetworkManager.GetDevices()` will only return
     [('eth0', 'Wired'), ('wlan0', 'Wireless'), ('wwan0', 'Modem')]
 
 .. class:: IP4Config
+
 .. class:: IP6Config
 
+.. class:: DHCP4Config
+
+.. class:: DHCP6Config
+
 These classes represent the various IP configuration interfaces.
+
+.. class:: AgentManager
+
+.. class:: SecretAgent
+
+Classes that can be used to handle and store secrets. Note that these are not
+for querying NetworkManager's exisiting secret stores. For that the
+:func:`GetSecrets` method of the :class:`Connection` class can be used.
 
 .. class:: VPNConnection
 
 This class represents the :data:`org.freedesktop.NetworkManager.VPN.Connection`
 interface.
 
+.. class:: VPNPlugin
+
+A class that can be used to query VPN plugins.
+
 .. toctree::
    :maxdepth: 2
 
 The n-m utility
 ---------------
-n-m is a command-line tool to deal with network-manager. It can connect you to
-defined networks and disconnect you again.
+n-m is a command-line tool to interact with NetworkManager. With it, you can
+inspect various configuration items and (de-)activate connections.
 
-Usage: [options] action [arguments]
+  Usage: [options] action [arguments]
 
-Actions:
-  list       - List all defined and active connections
-  activate   - Activate a connection
-  deactivate - Deactivate a connection
-  offline    - Deactivate all connections
-  enable     - Enable specific connection types
-  disable    - Disable specific connection types
-  info       - Information about a connection
+  Actions:
+    list       - List all defined and active connections
+    activate   - Activate a connection
+    deactivate - Deactivate a connection
+    offline    - Deactivate all connections
+    enable     - Enable specific connection types
+    disable    - Disable specific connection types
+    info       - Information about a connection
+    dump       - Dump a python hash of connection information, suitable for
+                 creating new connections
+

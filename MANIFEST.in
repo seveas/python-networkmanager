@@ -2,3 +2,4 @@ include docs/index.rst
 include docs/Makefile
 include docs/conf.py
 include examples/*
+include COPYING

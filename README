@@ -9,6 +9,11 @@ calls are forwarded to the correct interface.
 See docs/index.rst for the documentation. An HTML version can be found on
 http://packages.python.org/python-networkmanager/
 
+Requirements
+============
+Python 2.5 or newer (Python 3 is supported as well) and the python D-Bus
+bindings.
+
 Quick install instructions
 ==========================
 
