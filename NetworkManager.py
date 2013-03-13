@@ -117,14 +117,9 @@ class NMDbusInterface(object):
 class NetworkManager(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager'
     object_path = '/org/freedesktop/NetworkManager'
-NetworkManager = NetworkManager()
-
-class Settings(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Settings'
-    object_path = '/org/freedesktop/NetworkManager/Settings'
 
     def preprocess(self, name, args, kwargs):
-        if name == 'AddConnection':
+        if name in ('AddConnection', 'Update', 'AddAndActivateConnection'):
             settings = args[0]
             for key in settings:
                 if 'mac-address' in settings[key]:
@@ -141,7 +136,12 @@ class Settings(NMDbusInterface):
                 if 'dns' in settings['ipv4']:
                     settings['ipv4']['dns'] = [fixups.addr_to_dbus(addr) for addr in settings['ipv4']['dns']]
         return args, kwargs
+NetworkManager = NetworkManager()
 
+class Settings(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Settings'
+    object_path = '/org/freedesktop/NetworkManager/Settings'
+    preprocess = NetworkManager.preprocess
 Settings = Settings()
 
 class Connection(NMDbusInterface):
@@ -175,6 +175,7 @@ class Connection(NMDbusInterface):
                 val['ipv4']['routes'] = [fixups.route_to_python(route) for route in val['ipv4']['routes']]
                 val['ipv4']['dns'] = [fixups.addr_to_python(addr) for addr in val['ipv4']['dns']]
         return val
+    preprocess = NetworkManager.preprocess
 
 class ActiveConnection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Connection.Active'
