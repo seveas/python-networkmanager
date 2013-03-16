@@ -5,6 +5,7 @@
 # License: GPL3+
 
 import dbus
+import os
 import socket
 import struct
 import sys
@@ -15,6 +16,14 @@ if PY3:
     unicode = str
 elif not hasattr(__builtins__, 'bytes'):
     bytes = lambda x, y=None: chr(x[0]) if x else x
+
+try:
+    debuglevel = int(os.environ['NM_DEBUG'])
+    def debug(msg, data):
+        sys.stderr.write(msg + "\n")
+        sys.stderr.write(repr(data)+"\n")
+except:
+    debug = lambda *args: None
 
 class NMDbusInterface(object):
     bus = dbus.SystemBus()
@@ -42,13 +51,13 @@ class NMDbusInterface(object):
 
     def _make_property(self, name):
         def get(self):
-            data = self.unwrap(self.proxy.Get(self.interface_name, name,
-                                  dbus_interface='org.freedesktop.DBus.Properties'))
-            return self.postprocess(name, data)
+            data = self.proxy.Get(self.interface_name, name, dbus_interface='org.freedesktop.DBus.Properties')
+            debug("Received property %s.%s" % (self.interface_name, name), data)
+            return self.postprocess(name, self.unwrap(data))
         def set(self, value):
-            data = self.preprocess(name, data)
-            return self.proxy.Set(self.interface_name, name, self.wrap(value),
-                                  dbus_interface='org.freedesktop.DBus.Properties')
+            data = self.wrap(self.preprocess(name, data))
+            debug("Setting property %s.%s" % (self.interface_name, name), value)
+            return self.proxy.Set(self.interface_name, name, value, dbus_interface='org.freedesktop.DBus.Properties')
         return property(get, set)
 
     def unwrap(self, val):
@@ -99,11 +108,13 @@ class NMDbusInterface(object):
     def make_proxy_call(self, name):
         def proxy_call(*args, **kwargs):
             func = getattr(self.interface, name)
+            args, kwargs = self.preprocess(name, args, kwargs)
             args = self.wrap(args)
             kwargs = self.wrap(kwargs)
-            args, kwargs = self.preprocess(name, args, kwargs)
-            ret = self.unwrap(func(*args, **kwargs))
-            return self.postprocess(name, ret)
+            debug("Calling function %s.%s" % (self.interface_name, name), (args, kwargs))
+            ret = func(*args, **kwargs)
+            debug("Received return value for %s.%s" % (self.interface_name, name), ret)
+            return self.postprocess(name, self.unwrap(ret))
         return proxy_call
 
     def connect_to_signal(self, signal, handler, *args, **kwargs):
@@ -254,7 +265,7 @@ class IP4Config(NMDbusInterface):
         if name == 'Routes':
             return [fixups.route_to_python(route) for route in val]
         if name in ('Nameservers', 'WinsServers'):
-            return [fixups.add_to_python(addr) for addr in val]
+            return [fixups.addr_to_python(addr) for addr in val]
         return val
 
 class IP6Config(NMDbusInterface):

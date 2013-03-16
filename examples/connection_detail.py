@@ -36,10 +36,10 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
         print("   IPv4 config")
         print("      Addresses")
         for addr in dev.Ip4Config.Addresses:
-            print("         %s/%d -> %s" % addr)
+            print("         %s/%d -> %s" % tuple(addr))
         print("      Routes")
         for route in dev.Ip4Config.Routes:
-            print("         %s/%d -> %s (%d)" % route)
+            print("         %s/%d -> %s (%d)" % tuple(route))
         print("      Nameservers")
         for ns in dev.Ip4Config.Nameservers:
             print("         %s" % ns)
