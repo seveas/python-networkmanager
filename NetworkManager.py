@@ -347,11 +347,11 @@ class fixups(object):
 
     @staticmethod
     def addr_to_python(addr):
-        return socket.inet_ntoa(struct.pack('L', addr))
+        return socket.inet_ntoa(struct.pack('I', addr))
 
     @staticmethod
     def addr_to_dbus(addr):
-        return struct.unpack('L', socket.inet_aton(addr))
+        return struct.unpack('I', socket.inet_aton(addr))
 
     @staticmethod
     def route_to_python(route):
