@@ -219,6 +219,7 @@ class AccessPoint(NMDbusInterface):
     def postprocess(self, name, val):
         if name == 'Ssid':
             return fixups.ssid_to_python(val)
+        return val
 
 class Wired(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Wired'
