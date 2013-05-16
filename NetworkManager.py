@@ -140,9 +140,9 @@ class NetworkManager(NMDbusInterface):
             settings = args[0]
             for key in settings:
                 if 'mac-address' in settings[key]:
-                    settings[key]['mac-address'] = fixup.mac_to_dbus(settings['key']['mac-address'])
+                    settings[key]['mac-address'] = fixups.mac_to_dbus(settings[key]['mac-address'])
                 if 'bssid' in settings[key]:
-                    settings[key]['bssid'] = fixup.mac_to_dbus(settings['key']['mac-address'])
+                    settings[key]['bssid'] = fixups.mac_to_dbus(settings[key]['mac-address'])
             if 'ssid' in settings.get('802-11-wireless', {}):
                 settings['802-11-wireless']['ssid'] = fixups.ssid_to_dbus(settings['802-11-wireless']['ssid'])
             if 'ipv4' in settings:
