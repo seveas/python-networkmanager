@@ -342,7 +342,7 @@ class fixups(object):
         addr, netmask, gateway = addrconf
         return [
             fixups.addr_to_dbus(addr),
-            netmask,
+            fixups.mask_to_dbus(netmask),
             fixups.addr_to_dbus(gateway)
         ]
 
@@ -352,7 +352,11 @@ class fixups(object):
 
     @staticmethod
     def addr_to_dbus(addr):
-        return struct.unpack('I', socket.inet_aton(addr))
+        return dbus.UInt32(struct.unpack('I', socket.inet_aton(addr))[0])
+
+    @staticmethod
+    def mask_to_dbus(mask):
+        return dbus.UInt32(mask)
 
     @staticmethod
     def route_to_python(route):
@@ -369,7 +373,7 @@ class fixups(object):
         addr, netmask, gateway, metric = route
         return [
             fixups.addr_to_dbus(addr),
-            netmask,
+            fixups.mask_to_dbus(netmask),
             fixups.addr_to_dbus(gateway),
             socket.htonl(metric)
         ]
