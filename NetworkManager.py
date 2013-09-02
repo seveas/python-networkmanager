@@ -213,6 +213,11 @@ class Device(NMDbusInterface):
             NM_DEVICE_TYPE_ADSL: Adsl,
         }[self.DeviceType](self.object_path)
 
+    def postprocess(self, name, val):
+        if name == 'Ip4Address':
+            return fixups.addr_to_python(val)
+        return val
+
 class AccessPoint(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.AccessPoint'
 
