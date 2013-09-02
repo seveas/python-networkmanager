@@ -193,7 +193,8 @@ def info(names):
             print("Wireless link")
             print("  MAC address:", conn['802-11-wireless'].get('mac-address', '(Automatic)'))
             print("  SSID:", conn['802-11-wireless']['ssid'])
-            print("  Wireless security:", conn[conn['802-11-wireless']['security']]['key-mgmt'])
+            if 'security' in conn['802-11-wireless']:
+                print("  Wireless security:", conn[conn['802-11-wireless']['security']]['key-mgmt'])
         elif conn['connection']['type'] == 'vpn':
             print("VPN")
             print("  Type:", conn['vpn']['service-type'].rsplit('.',1)[-1])
