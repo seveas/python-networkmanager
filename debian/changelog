@@ -1,3 +1,9 @@
+python-networkmanager (0.9.11-1) saucy; urgency=low
+
+  * New upstream release
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Sun, 13 Apr 2014 21:22:47 +0200
+
 python-networkmanager (0.9.8-1) quantal; urgency=low
 
   * New upstream release
