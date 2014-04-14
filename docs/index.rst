@@ -71,7 +71,7 @@ translate them to text. For example:
   >>> NetworkManager.const('device_type', 2)
   'wifi'
 
-.. _`NetworkManager project website`: projects.gnome.org/NetworkManager/developers/api/09/spec.html
+.. _`NetworkManager project website`: https://developer.gnome.org/NetworkManager/0.9/spec.html
 
 List of classes
 ---------------
