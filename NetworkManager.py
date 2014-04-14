@@ -50,15 +50,15 @@ class NMDbusInterface(object):
                 setattr(self.__class__, p, self._make_property(p))
 
     def _make_property(self, name):
-        def get(self):
+        def get_func(self):
             data = self.proxy.Get(self.interface_name, name, dbus_interface='org.freedesktop.DBus.Properties')
             debug("Received property %s.%s" % (self.interface_name, name), data)
             return self.postprocess(name, self.unwrap(data))
-        def set(self, value):
-            data = self.wrap(self.preprocess(name, data))
+        def set_func(self, value):
+            value = self.wrap(self.preprocess(name, (value,), {})[0][0])
             debug("Setting property %s.%s" % (self.interface_name, name), value)
             return self.proxy.Set(self.interface_name, name, value, dbus_interface='org.freedesktop.DBus.Properties')
-        return property(get, set)
+        return property(get_func, set_func)
 
     def unwrap(self, val):
         if isinstance(val, dbus.ByteArray):
