@@ -211,6 +211,7 @@ class Device(NMDbusInterface):
             NM_DEVICE_TYPE_BOND: Bond,
             NM_DEVICE_TYPE_VLAN: Vlan,
             NM_DEVICE_TYPE_ADSL: Adsl,
+            NM_DEVICE_TYPE_BRIDGE: Bridge,
         }[self.DeviceType](self.object_path)
 
     def postprocess(self, name, val):
