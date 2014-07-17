@@ -141,6 +141,8 @@ class NetworkManager(NMDbusInterface):
             for key in settings:
                 if 'mac-address' in settings[key]:
                     settings[key]['mac-address'] = fixups.mac_to_dbus(settings[key]['mac-address'])
+                if 'cloned-mac-address' in settings[key]:
+                    settings[key]['cloned-mac-address'] = fixups.mac_to_dbus(settings[key]['cloned-mac-address'])
                 if 'bssid' in settings[key]:
                     settings[key]['bssid'] = fixups.mac_to_dbus(settings[key]['mac-address'])
             if 'ssid' in settings.get('802-11-wireless', {}):
@@ -184,6 +186,8 @@ class Connection(NMDbusInterface):
                 val_ = val[key]
                 if 'mac-address' in val_:
                     val_['mac-address'] = fixups.mac_to_python(val_['mac-address'])
+                if 'cloned-mac-address' in val_:
+                    val_['cloned-mac-address'] = fixups.mac_to_python(val_['cloned-mac-address'])
                 if 'bssid' in val_:
                     val_['bssid'] = fixups.mac_to_python(val_['bssid'])
             if 'ipv4' in val:
