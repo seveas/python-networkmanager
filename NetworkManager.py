@@ -229,6 +229,8 @@ class AccessPoint(NMDbusInterface):
     def postprocess(self, name, val):
         if name == 'Ssid':
             return fixups.ssid_to_python(val)
+        elif name == 'Strength':
+            return fixups.strength_to_python(val)
         return val
 
 class Wired(NMDbusInterface):
@@ -329,6 +331,10 @@ class fixups(object):
         if isinstance(ssid, unicode):
             ssid = ssid.encode('utf-8')
         return [dbus.Byte(x) for x in ssid]
+
+    @staticmethod
+    def strength_to_python(strength):
+        return struct.unpack('B', strength)[0]
 
     @staticmethod
     def mac_to_python(mac):
