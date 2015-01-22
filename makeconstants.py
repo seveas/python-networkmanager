@@ -3,7 +3,8 @@
 
 import re
 
-enum_regex = re.compile(r'typedef enum(?:\s+[a-zA-Z]+)?\s*\{(.*?)\}', re.DOTALL)
+enum_regex = re.compile(r'typedef enum(?:\s+[a-zA-Z]+)?\s*\{(.*?)\}',
+                        re.DOTALL)
 comment_regex = re.compile(r'/\*.*?\*/', re.DOTALL)
 headers = ['/usr/include/NetworkManager/NetworkManager.h',
            '/usr/include/NetworkManager/NetworkManagerVPN.h',

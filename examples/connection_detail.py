@@ -29,7 +29,8 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
     for dev in conn.Devices:
         print("Device: %s" % dev.Interface)
         print("   Type             %s" % c('device_type', dev.DeviceType))
-        # print("   IPv4 address     %s" % socket.inet_ntoa(struct.pack('L', dev.Ip4Address)))
+        # print("   IPv4 address     %s" %
+        #       socket.inet_ntoa(struct.pack('L', dev.Ip4Address)))
         devicedetail = dev.SpecificDevice()
         if not callable(devicedetail.HwAddress):
             print("   MAC address      %s" % devicedetail.HwAddress)

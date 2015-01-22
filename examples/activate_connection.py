@@ -8,7 +8,8 @@ import sys
 # Find the connection
 name = sys.argv[1]
 connections = NetworkManager.Settings.ListConnections()
-connections = dict([(x.GetSettings()['connection']['id'], x) for x in connections])
+connections = dict([(x.GetSettings()['connection']['id'], x)
+                   for x in connections])
 conn = connections[name]
 
 # Find a suitable device
