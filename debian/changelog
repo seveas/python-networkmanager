@@ -1,3 +1,9 @@
+python-networkmanager (0.9.13-1) utopic; urgency=medium
+
+  * New upstream release
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Wed, 04 Mar 2015 16:58:49 +0100
+
 python-networkmanager (0.9.12-1) trusty; urgency=medium
 
   * New upstream release
