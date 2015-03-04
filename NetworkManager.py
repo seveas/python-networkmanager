@@ -1,7 +1,7 @@
 # NetworkManager - a library to make interacting with the NetworkManager daemon
 # easier.
 #
-# (C)2011-2013 Dennis Kaarsemaker
+# (C)2011-2015 Dennis Kaarsemaker
 # License: GPL3+
 
 import dbus
