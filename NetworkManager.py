@@ -185,7 +185,10 @@ class Connection(NMDbusInterface):
                     break
             else:
                 return {}
-        return self.make_proxy_call('GetSecrets')(name)
+        try:
+            return self.make_proxy_call('GetSecrets')(name)
+        except:
+            return {}
 
     def postprocess(self, name, val):
         if name == 'GetSettings':
