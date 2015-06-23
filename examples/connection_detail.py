@@ -20,7 +20,7 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
     if conn.Devices:
         devices = " (on %s)" % ", ".join([x.Interface for x in conn.Devices])
     print("Active connection: %s%s" % (settings['connection']['id'], devices))
-    size = max([max([len(y) for y in x.keys()]) for x in settings.values()])
+    size = max([max([len(y) for y in x.keys() + ['']]) for x in settings.values()])
     format = "      %%-%ds %%s" % (size + 5)
     for key, val in sorted(settings.items()):
         print("   %s" % key)
