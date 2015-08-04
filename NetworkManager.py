@@ -96,6 +96,8 @@ class NMDbusInterface(object):
             if hasattr(val, 'items'):
                 return dict([(x, self.wrap(y)) for x, y in val.items()])
             else:
+                if( isinstance( val, dbus.Struct) or isinstance( val, dbus.ByteArray)):
+                    return val
                 return [self.wrap(x) for x in val]
         return val
 
@@ -149,11 +151,18 @@ class NetworkManager(NMDbusInterface):
                 settings['802-11-wireless']['ssid'] = fixups.ssid_to_dbus(settings['802-11-wireless']['ssid'])
             if 'ipv4' in settings:
                 if 'addresses' in settings['ipv4']:
-                    settings['ipv4']['addresses'] = [fixups.addrconf_to_dbus(addr) for addr in settings['ipv4']['addresses']]
+                    settings['ipv4']['addresses'] = [fixups.addrconf_to_dbus(addr,socket.AF_INET) for addr in settings['ipv4']['addresses']]
                 if 'routes' in settings['ipv4']:
-                    settings['ipv4']['routes'] = [fixups.route_to_dbus(route) for route in settings['ipv4']['routes']]
+                    settings['ipv4']['routes'] = [fixups.route_to_dbus(route,socket.AF_INET) for route in settings['ipv4']['routes']]
                 if 'dns' in settings['ipv4']:
-                    settings['ipv4']['dns'] = [fixups.addr_to_dbus(addr) for addr in settings['ipv4']['dns']]
+                    settings['ipv4']['dns'] = [fixups.addr_to_dbus(addr,socket.AF_INET) for addr in settings['ipv4']['dns']]
+            if 'ipv6' in settings:
+                if 'addresses' in settings['ipv6']:
+                    settings['ipv6']['addresses'] = [fixups.addrconf_to_dbus(addr,socket.AF_INET6) for addr in settings['ipv6']['addresses']]
+                if 'routes' in settings['ipv6']:
+                    settings['ipv6']['routes'] = [fixups.route_to_dbus(route,socket.AF_INET6) for route in settings['ipv6']['routes']]
+                if 'dns' in settings['ipv6']:
+                    settings['ipv6']['dns'] = [fixups.addr_to_dbus(addr,socket.AF_INET6) for addr in settings['ipv6']['dns']]
         return args, kwargs
 NetworkManager = NetworkManager()
 
@@ -176,7 +185,10 @@ class Connection(NMDbusInterface):
                     break
             else:
                 return {}
-        return self.make_proxy_call('GetSecrets')(name)
+        try:
+            return self.make_proxy_call('GetSecrets')(name)
+        except:
+            return {}
 
     def postprocess(self, name, val):
         if name == 'GetSettings':
@@ -191,9 +203,13 @@ class Connection(NMDbusInterface):
                 if 'bssid' in val_:
                     val_['bssid'] = fixups.mac_to_python(val_['bssid'])
             if 'ipv4' in val:
-                val['ipv4']['addresses'] = [fixups.addrconf_to_python(addr) for addr in val['ipv4']['addresses']]
-                val['ipv4']['routes'] = [fixups.route_to_python(route) for route in val['ipv4']['routes']]
-                val['ipv4']['dns'] = [fixups.addr_to_python(addr) for addr in val['ipv4']['dns']]
+                val['ipv4']['addresses'] = [fixups.addrconf_to_python(addr,socket.AF_INET) for addr in val['ipv4']['addresses']]
+                val['ipv4']['routes'] = [fixups.route_to_python(route,socket.AF_INET) for route in val['ipv4']['routes']]
+                val['ipv4']['dns'] = [fixups.addr_to_python(addr,socket.AF_INET) for addr in val['ipv4']['dns']]
+            if 'ipv6' in val:
+                val['ipv6']['addresses'] = [fixups.addrconf_to_python(addr,socket.AF_INET6) for addr in val['ipv6']['addresses']]
+                val['ipv6']['routes'] = [fixups.route_to_python(route,socket.AF_INET6) for route in val['ipv6']['routes']]
+                val['ipv6']['dns'] = [fixups.addr_to_python(addr,socket.AF_INET6) for addr in val['ipv6']['dns']]
         return val
     preprocess = NetworkManager.preprocess
 
@@ -220,7 +236,9 @@ class Device(NMDbusInterface):
 
     def postprocess(self, name, val):
         if name == 'Ip4Address':
-            return fixups.addr_to_python(val)
+            return fixups.addr_to_python(val,socket.AF_INET)
+        if name == 'Ip6Address':
+            return fixups.addr_to_python(val,socket.AF_INET6)
         return val
 
 class AccessPoint(NMDbusInterface):
@@ -274,15 +292,24 @@ class IP4Config(NMDbusInterface):
 
     def postprocess(self, name, val):
         if name == 'Addresses':
-            return [fixups.addrconf_to_python(addr) for addr in val]
+            return [fixups.addrconf_to_python(addr,socket.AF_INET) for addr in val]
         if name == 'Routes':
-            return [fixups.route_to_python(route) for route in val]
+            return [fixups.route_to_python(route,socket.AF_INET) for route in val]
         if name in ('Nameservers', 'WinsServers'):
-            return [fixups.addr_to_python(addr) for addr in val]
+            return [fixups.addr_to_python(addr,socket.AF_INET) for addr in val]
         return val
 
 class IP6Config(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.IP6Config'
+    
+    def postprocess(self, name, val):
+        if name == 'Addresses':
+            return [fixups.addrconf_to_python(addr,socket.AF_INET6) for addr in val]
+        if name == 'Routes':
+            return [fixups.route_to_python(route,socket.AF_INET6) for route in val]
+        if name in ('Nameservers', 'WinsServers'):
+            return [fixups.addr_to_python(addr,socket.AF_INET6) for addr in val]
+        return val
 
 class DHCP4Config(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.DHCP4Config'
@@ -301,9 +328,9 @@ class VPNConnection(NMDbusInterface):
 
     def preprocess(self, name, args, kwargs):
         conf = args[0]
-        conf['addresses'] = [fixups.addrconf_to_python(addr) for addr in conf['addresses']]
-        conf['routes'] = [fixups.route_to_python(route) for route in conf['routes']]
-        conf['dns'] = [fixups.addr_to_python(addr) for addr in conf['dns']]
+        conf['addresses'] = [fixups.addrconf_to_python(addr,socket.AF_INET) for addr in conf['addresses']]
+        conf['routes'] = [fixups.route_to_python(route,socket.AF_INET) for route in conf['routes']]
+        conf['dns'] = [fixups.addr_to_python(addr,socket.AF_INET) for addr in conf['dns']]
         return args, kwargs
 
 class VPNPlugin(NMDbusInterface):
@@ -345,52 +372,67 @@ class fixups(object):
         return [dbus.Byte(int(x, 16)) for x in mac.split(':')]
 
     @staticmethod
-    def addrconf_to_python(addrconf):
+    def addrconf_to_python(addrconf,family):
         addr, netmask, gateway = addrconf
         return [
-            fixups.addr_to_python(addr),
+            fixups.addr_to_python(addr,family),
             netmask,
-            fixups.addr_to_python(gateway)
+            fixups.addr_to_python(gateway,family)
         ]
 
     @staticmethod
-    def addrconf_to_dbus(addrconf):
+    def addrconf_to_dbus(addrconf,family):
         addr, netmask, gateway = addrconf
-        return [
-            fixups.addr_to_dbus(addr),
-            fixups.mask_to_dbus(netmask),
-            fixups.addr_to_dbus(gateway)
-        ]
+        if( family == socket.AF_INET):
+            return [
+                fixups.addr_to_dbus(addr,family),
+                fixups.mask_to_dbus(netmask),
+                fixups.addr_to_dbus(gateway,family)
+            ]
+        else:
+            return dbus.Struct(
+                (
+                    fixups.addr_to_dbus(addr,family),
+                    fixups.mask_to_dbus(netmask),
+                    fixups.addr_to_dbus(gateway,family)
+                ), signature = 'ayuay'
+            )
 
     @staticmethod
-    def addr_to_python(addr):
-        return socket.inet_ntoa(struct.pack('I', addr))
+    def addr_to_python(addr,family):
+        if( family == socket.AF_INET):
+            return socket.inet_ntop(family,struct.pack('I', addr))
+        else:
+            return socket.inet_ntop(family,b''.join(addr))
 
     @staticmethod
-    def addr_to_dbus(addr):
-        return dbus.UInt32(struct.unpack('I', socket.inet_aton(addr))[0])
+    def addr_to_dbus(addr,family):
+        if( family == socket.AF_INET):
+            return dbus.UInt32(struct.unpack('I', socket.inet_pton(family,addr))[0])
+        else:
+            return dbus.ByteArray(socket.inet_pton(family,addr))
 
     @staticmethod
     def mask_to_dbus(mask):
         return dbus.UInt32(mask)
 
     @staticmethod
-    def route_to_python(route):
+    def route_to_python(route,family):
         addr, netmask, gateway, metric = route
         return [
-            fixups.addr_to_python(addr),
+            fixups.addr_to_python(addr,family),
             netmask,
-            fixups.addr_to_python(gateway),
+            fixups.addr_to_python(gateway,family),
             socket.ntohl(metric)
         ]
 
     @staticmethod
-    def route_to_dbus(route):
+    def route_to_dbus(route,family):
         addr, netmask, gateway, metric = route
         return [
-            fixups.addr_to_dbus(addr),
+            fixups.addr_to_dbus(addr,family),
             fixups.mask_to_dbus(netmask),
-            fixups.addr_to_dbus(gateway),
+            fixups.addr_to_dbus(gateway,family),
             socket.htonl(metric)
         ]
 
