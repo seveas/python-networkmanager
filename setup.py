@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name = "python-networkmanager",
-      version = "0.9.13",
+      version = "1.0.1",
       author = "Dennis Kaarsemaker",
       author_email = "dennis@kaarsemaker.net",
       url = "http://github.com/seveas/python-networkmanager",
@@ -16,6 +16,7 @@ setup(name = "python-networkmanager",
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Topic :: System :: Networking',
       ]
 )

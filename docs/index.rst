@@ -14,7 +14,7 @@ connections.
 The :mod:`NetworkManager` module
 --------------------------------
 .. module:: NetworkManager
-   :platform: Linux systems with NetworkManager 0.9.x
+   :platform: Linux systems with NetworkManager 0.9 and 1.0
    :synopsis: Talk to NetworkManager from python
 
 All the code is contained in one module: :mod:`NetworkManager`. Using it is as
@@ -24,7 +24,7 @@ simple as you think it is:
 
   >>> import NetworkManager
   >>> NetworkManager.NetworkManager.Version
-  '0.9.6.0'
+  '1.0.4'
 
 NetworkManager exposes a lot of information via D-Bus and also allows full
 control of network settings. The full D-Bus API can be found on `NetworkManager
