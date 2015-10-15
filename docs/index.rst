@@ -127,6 +127,8 @@ interface.
 
 .. class:: Adsl
 
+.. class:: Generic
+
 These classes represent D-Bus interfaces for various types of hardware. Note
 that methods such as :data:`NetworkManager.GetDevices()` will only return
 :class:`Device` instances. To get the hardware-specific class, you can call the

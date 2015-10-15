@@ -232,6 +232,7 @@ class Device(NMDbusInterface):
             NM_DEVICE_TYPE_VLAN: Vlan,
             NM_DEVICE_TYPE_ADSL: Adsl,
             NM_DEVICE_TYPE_BRIDGE: Bridge,
+            NM_DEVICE_TYPE_GENERIC: Generic
         }[self.DeviceType](self.object_path)
 
     def postprocess(self, name, val):
@@ -283,6 +284,9 @@ class Vlan(NMDbusInterface):
 
 class Adsl(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.adsl'
+
+class Generic(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
 
 class NSP(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Wimax.NSP'
