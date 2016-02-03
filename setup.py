@@ -9,7 +9,6 @@ setup(name = "python-networkmanager",
       url = "http://github.com/seveas/python-networkmanager",
       description = "Easy communication with NetworkManager",
       py_modules = ["NetworkManager"],
-      scripts = ["n-m"],
       classifiers = [
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

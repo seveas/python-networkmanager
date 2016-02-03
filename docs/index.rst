@@ -169,22 +169,3 @@ A class that can be used to query VPN plugins.
 
 .. toctree::
    :maxdepth: 2
-
-The n-m utility
----------------
-n-m is a command-line tool to interact with NetworkManager. With it, you can
-inspect various configuration items and (de-)activate connections.
-
-  Usage: [options] action [arguments]
-
-  Actions:
-    list       - List all defined and active connections
-    activate   - Activate a connection
-    deactivate - Deactivate a connection
-    offline    - Deactivate all connections
-    enable     - Enable specific connection types
-    disable    - Disable specific connection types
-    info       - Information about a connection
-    dump       - Dump a python hash of connection information, suitable for
-                 creating new connections
-
