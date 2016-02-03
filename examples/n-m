@@ -3,8 +3,8 @@
 # Command-line tool to interact with NetworkManager. With this tool, you can
 # inspect various configuration items and (de-)activate connections.
 #
-# (C) 2011-2015 Dennis Kaarsemaker
-# License: GPL3+
+# (C) 2011-2016 Dennis Kaarsemaker
+# License: zlib
 
 from __future__ import print_function
 
