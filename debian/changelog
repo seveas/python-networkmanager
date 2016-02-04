@@ -1,3 +1,11 @@
+python-networkmanager (1.1-1) xenial; urgency=medium
+
+  * New upstream release
+  * New license: zlib instead of gpl
+  * n-m is now shipped as an example, as nmcli is a much better alternative
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Thu, 04 Feb 2016 08:20:13 +0100
+
 python-networkmanager (1.0.1-1) wily; urgency=medium
 
   * New upstream release
