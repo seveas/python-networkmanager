@@ -19,10 +19,10 @@ Quick install instructions
 
 Stable version:
 
-$ sudo easy_install python-networkmanager
+$ pip install python-networkmanager
 
 Latest code:
 
 $ git clone http://github.com/seveas/python-networkmanager
 $ cd python-networkmanager
-$ sudo python setup.py install
+$ python setup.py install
