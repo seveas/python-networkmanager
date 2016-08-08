@@ -264,18 +264,24 @@ class Device(NMDbusInterface):
 
     def SpecificDevice(self):
         return {
-            NM_DEVICE_TYPE_ETHERNET: Wired,
-            NM_DEVICE_TYPE_WIFI: Wireless,
-            NM_DEVICE_TYPE_MODEM: Modem,
-            NM_DEVICE_TYPE_BT: Bluetooth,
-            NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
-            NM_DEVICE_TYPE_WIMAX: Wimax,
-            NM_DEVICE_TYPE_INFINIBAND: Infiniband,
-            NM_DEVICE_TYPE_BOND: Bond,
-            NM_DEVICE_TYPE_VLAN: Vlan,
             NM_DEVICE_TYPE_ADSL: Adsl,
+            NM_DEVICE_TYPE_BOND: Bond,
             NM_DEVICE_TYPE_BRIDGE: Bridge,
-            NM_DEVICE_TYPE_GENERIC: Generic
+            NM_DEVICE_TYPE_BT: Bluetooth,
+            NM_DEVICE_TYPE_ETHERNET: Wired,
+            NM_DEVICE_TYPE_GENERIC: Generic,
+            NM_DEVICE_TYPE_INFINIBAND: Infiniband,
+            NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
+            NM_DEVICE_TYPE_MACVLAN: Macvlan,
+            NM_DEVICE_TYPE_MODEM: Modem,
+            NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
+            NM_DEVICE_TYPE_TEAM: Team,
+            NM_DEVICE_TYPE_TUN: Tun,
+            NM_DEVICE_TYPE_VETH: Veth,
+            NM_DEVICE_TYPE_VLAN: Vlan,
+            NM_DEVICE_TYPE_VXLAN: Vxlan,
+            NM_DEVICE_TYPE_WIFI: Wireless,
+            NM_DEVICE_TYPE_WIMAX: Wimax,
         }[self.DeviceType](self.object_path)
 
     def postprocess(self, name, val):
@@ -295,26 +301,11 @@ class AccessPoint(NMDbusInterface):
             return fixups.strength_to_python(val)
         return val
 
-class Wired(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.Wired'
-
-class Wireless(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.Wireless'
-
-class Modem(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.Modem'
+class Adsl(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.adsl'
 
 class Bluetooth(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Bluetooth'
-
-class OlpcMesh(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.OlpcMesh'
-
-class Wimax(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.Wimax'
-
-class Infiniband(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.Infiniband'
 
 class Bond(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Bond'
@@ -322,14 +313,47 @@ class Bond(NMDbusInterface):
 class Bridge(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Bridge'
 
+class Generic(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
+
+class Infiniband(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Infiniband'
+
+class IPTunnel(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Infiniband'
+
+class Macvlan(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
+
+class Modem(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Modem'
+
+class OlpcMesh(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.OlpcMesh'
+
+class Team(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
+
+class Tun(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
+
+class Veth(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
+
 class Vlan(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Vlan'
 
-class Adsl(NMDbusInterface):
-    interface_name = 'org.freedesktop.NetworkManager.Device.adsl'
-
-class Generic(NMDbusInterface):
+class Vxlan(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Device.Generic'
+
+class Wimax(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Wimax'
+
+class Wired(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Wired'
+
+class Wireless(NMDbusInterface):
+    interface_name = 'org.freedesktop.NetworkManager.Device.Wireless'
 
 class NSP(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Wimax.NSP'
@@ -513,6 +537,11 @@ NM_DEVICE_TYPE_ADSL = 12
 NM_DEVICE_TYPE_BRIDGE = 13
 NM_DEVICE_TYPE_GENERIC = 14
 NM_DEVICE_TYPE_TEAM = 15
+NM_DEVICE_TYPE_TUN = 16
+NM_DEVICE_TYPE_IP_TUNNEL = 17
+NM_DEVICE_TYPE_MACVLAN = 18
+NM_DEVICE_TYPE_VXLAN = 19
+NM_DEVICE_TYPE_VETH = 20
 NM_DEVICE_CAP_NONE = 0
 NM_DEVICE_CAP_NM_SUPPORTED = 1
 NM_DEVICE_CAP_CARRIER_DETECT = 2
@@ -529,6 +558,7 @@ NM_WIFI_DEVICE_CAP_ADHOC = 128
 NM_WIFI_DEVICE_CAP_FREQ_VALID = 256
 NM_WIFI_DEVICE_CAP_FREQ_2GHZ = 512
 NM_WIFI_DEVICE_CAP_FREQ_5GHZ = 1024
+NM_WIFI_DEVICE_CAP_IBSS_RSN = 2048
 NM_802_11_AP_FLAGS_NONE = 0
 NM_802_11_AP_FLAGS_PRIVACY = 1
 NM_802_11_AP_SEC_NONE = 0

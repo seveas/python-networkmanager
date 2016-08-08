@@ -24,7 +24,7 @@ simple as you think it is:
 
   >>> import NetworkManager
   >>> NetworkManager.NetworkManager.Version
-  '1.0.4'
+  '1.2.0'
 
 NetworkManager exposes a lot of information via D-Bus and also allows full
 control of network settings. The full D-Bus API can be found on `NetworkManager
@@ -71,7 +71,7 @@ translate them to text. For example:
   >>> NetworkManager.const('device_type', 2)
   'wifi'
 
-.. _`NetworkManager project website`: https://developer.gnome.org/NetworkManager/0.9/spec.html
+.. _`NetworkManager project website`: https://developer.gnome.org/NetworkManager/1.2/spec.html
 
 List of classes
 ---------------
@@ -110,29 +110,41 @@ interface.
 
 .. class:: Device
 
-.. class:: Wired
-
-.. class:: Wireless
-
-.. class:: Modem
+.. class:: Adsl
 
 .. class:: Bluetooth
-
-.. class:: OlpcMesh
-
-.. class:: Wimax
-
-.. class:: Infiniband
 
 .. class:: Bond
 
 .. class:: Bridge
 
+.. class:: Generic
+
+.. class:: Infiniband
+
+.. class:: IPTunnel
+
+.. class:: Macvlan
+
+.. class:: Modem
+
+.. class:: OlpcMesh
+
+.. class:: Team
+
+.. class:: Tun
+
+.. class:: Veth
+
 .. class:: Vlan
 
-.. class:: Adsl
+.. class:: Vxlan
 
-.. class:: Generic
+.. class:: Wimax
+
+.. class:: Wired
+
+.. class:: Wireless
 
 These classes represent D-Bus interfaces for various types of hardware. Note
 that methods such as :data:`NetworkManager.GetDevices()` will only return
