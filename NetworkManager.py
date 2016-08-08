@@ -10,6 +10,7 @@ import os
 import socket
 import struct
 import sys
+import weakref
 
 PY3 = sys.version_info >= (3,0)
 if PY3:
@@ -26,17 +27,21 @@ try:
 except:
     debug = lambda *args: None
 
+auto_reconnect = True
+registry = []
+
 class NMDbusInterface(object):
     bus = dbus.SystemBus()
     dbus_service = 'org.freedesktop.NetworkManager'
     object_path = None
 
     def __init__(self, object_path=None):
+        global registry
         if isinstance(object_path, NMDbusInterface):
             object_path = object_path.object_path
         self.object_path = self.object_path or object_path
-        self.proxy = self.bus.get_object(self.dbus_service, self.object_path)
-        self.interface = dbus.Interface(self.proxy, self.interface_name)
+        self.signals = []
+        self.connect()
 
         properties = []
         try:
@@ -49,6 +54,25 @@ class NMDbusInterface(object):
             p = str(p)
             if not hasattr(self.__class__, p):
                 setattr(self.__class__, p, self._make_property(p))
+
+        registry.append(weakref.proxy(self))
+
+    def connect(self):
+        self.proxy = self.bus.get_object(self.dbus_service, self.object_path)
+        self.interface = dbus.Interface(self.proxy, self.interface_name)
+        signals = self.signals[:]
+        self.signals = []
+        for signal, handler, args, kwargs in signals:
+            self.connect_to_signal(signal, handler, *args, **kwargs)
+
+    def reconnect(self, name, old, new):
+        if str(new) == "" or str(name) != 'org.freedesktop.NetworkManager':
+            return
+        for obj in registry:
+            try:
+                obj.connect()
+            except ReferenceError:
+                pass
 
     def _make_property(self, name):
         def get_func(self):
@@ -121,6 +145,7 @@ class NMDbusInterface(object):
         return proxy_call
 
     def connect_to_signal(self, signal, handler, *args, **kwargs):
+        self.signals.append((signal, handler, args, kwargs))
         def helper(*args, **kwargs):
             args = [self.unwrap(x) for x in args]
             handler(*args, **kwargs)
@@ -137,6 +162,11 @@ class NMDbusInterface(object):
 class NetworkManager(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager'
     object_path = '/org/freedesktop/NetworkManager'
+
+    def auto_reconnect(self):
+        global auto_reconnect
+        auto_reconnect = True
+        self.bus.add_signal_receiver(self.reconnect, 'NameOwnerChanged', 'org.freedesktop.DBus')
 
     def preprocess(self, name, args, kwargs):
         if name in ('AddConnection', 'Update', 'UpdateUnsaved', 'AddAndActivateConnection'):

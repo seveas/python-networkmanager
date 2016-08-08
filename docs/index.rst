@@ -82,6 +82,11 @@ This class represents the :data:`org.freedesktop.NetworkManager` interface.
 Note that :data:`NetworkManager.NetworkManager` actually is the singleton
 instance of this class.
 
+.. method:: auto_reconnect
+
+Call this method to automatically update D-Bus paths and reconnect signals when
+NetworkManager restarts.
+
 .. class:: Settings
 
 This class represents the :data:`org.freedesktop.NetworkManager.Settings`
