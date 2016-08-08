@@ -4,6 +4,7 @@
 # (C)2011-2016 Dennis Kaarsemaker
 # License: zlib
 
+import copy
 import dbus
 import os
 import socket
@@ -88,9 +89,9 @@ class NMDbusInterface(object):
     def wrap(self, val):
         if isinstance(val, NMDbusInterface):
             return val.object_path
-        if hasattr(val, 'mro'):
-            for klass in val.mro():
-                if klass.__module__ == '_dbus_bindings':
+        if hasattr(val.__class__, 'mro'):
+            for klass in val.__class__.mro():
+                if klass.__module__ in ('dbus', '_dbus_bindings'):
                     return val
         if hasattr(val, '__iter__') and not isinstance(val, basestring):
             if hasattr(val, 'items'):
@@ -138,8 +139,8 @@ class NetworkManager(NMDbusInterface):
     object_path = '/org/freedesktop/NetworkManager'
 
     def preprocess(self, name, args, kwargs):
-        if name in ('AddConnection', 'Update', 'AddAndActivateConnection'):
-            settings = args[0]
+        if name in ('AddConnection', 'Update', 'UpdateUnsaved', 'AddAndActivateConnection'):
+            settings = copy.deepcopy(args[0])
             for key in settings:
                 if 'mac-address' in settings[key]:
                     settings[key]['mac-address'] = fixups.mac_to_dbus(settings[key]['mac-address'])
@@ -163,6 +164,18 @@ class NetworkManager(NMDbusInterface):
                     settings['ipv6']['routes'] = [fixups.route_to_dbus(route,socket.AF_INET6) for route in settings['ipv6']['routes']]
                 if 'dns' in settings['ipv6']:
                     settings['ipv6']['dns'] = [fixups.addr_to_dbus(addr,socket.AF_INET6) for addr in settings['ipv6']['dns']]
+            # Get rid of empty arrays/dicts. dbus barfs on them (can't guess
+            # signatures), and if they were to get through, NetworkManager
+            # ignores them anyway.
+            for key in list(settings.keys()):
+                if isinstance(settings[key], dict):
+                    for key2 in list(settings[key].keys()):
+                        if settings[key][key2] in ({}, []):
+                            del settings[key][key2]
+                if settings[key] in ({}, []):
+                    del settings[key]
+            return (settings,) + args[1:], kwargs
+
         return args, kwargs
 NetworkManager = NetworkManager()
 
@@ -335,7 +348,7 @@ class VPNConnection(NMDbusInterface):
         conf['addresses'] = [fixups.addrconf_to_python(addr,socket.AF_INET) for addr in conf['addresses']]
         conf['routes'] = [fixups.route_to_python(route,socket.AF_INET) for route in conf['routes']]
         conf['dns'] = [fixups.addr_to_python(addr,socket.AF_INET) for addr in conf['dns']]
-        return args, kwargs
+        return (conf,) + args[1:], kwargs
 
 class VPNPlugin(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.VPN.Plugin'
