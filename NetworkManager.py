@@ -207,13 +207,15 @@ class NetworkManager(NMDbusInterface):
             return (settings,) + args[1:], kwargs
 
         return args, kwargs
-NetworkManager = NetworkManager()
+if not os.environ.get('LAZY_NETWORKMANAGER'):
+    NetworkManager = NetworkManager()
 
 class Settings(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Settings'
     object_path = '/org/freedesktop/NetworkManager/Settings'
     preprocess = NetworkManager.preprocess
-Settings = Settings()
+if not os.environ.get('LAZY_NETWORKMANAGER'):
+    Settings = Settings()
 
 class Connection(NMDbusInterface):
     interface_name = 'org.freedesktop.NetworkManager.Settings.Connection'
