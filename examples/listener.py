@@ -5,7 +5,6 @@ Listen to some available signals from NetworkManager
 import dbus.mainloop.glib; dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 from gi.repository import GObject
 import NetworkManager
-NetworkManager.NetworkManager.auto_reconnect()
 
 d_args = ('sender', 'destination', 'interface', 'member', 'path')
 d_args = dict([(x + '_keyword', 'd_' + x) for x in d_args])

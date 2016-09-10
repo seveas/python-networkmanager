@@ -20,7 +20,7 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
     if conn.Devices:
         devices = " (on %s)" % ", ".join([x.Interface for x in conn.Devices])
     print("Active connection: %s%s" % (settings['connection']['id'], devices))
-    size = max([max([len(y) for y in x.keys() + ['']]) for x in settings.values()])
+    size = max([max([len(y) for y in list(x.keys()) + ['']]) for x in settings.values()])
     format = "      %%-%ds %%s" % (size + 5)
     for key, val in sorted(settings.items()):
         print("   %s" % key)
@@ -30,9 +30,8 @@ for conn in NetworkManager.NetworkManager.ActiveConnections:
         print("Device: %s" % dev.Interface)
         print("   Type             %s" % c('device_type', dev.DeviceType))
         # print("   IPv4 address     %s" % socket.inet_ntoa(struct.pack('L', dev.Ip4Address)))
-        devicedetail = dev.SpecificDevice()
-        if not callable(devicedetail.HwAddress):
-            print("   MAC address      %s" % devicedetail.HwAddress)
+        if hasattr(dev, 'HwAddress'):
+            print("   MAC address      %s" % dev.HwAddress)
         print("   IPv4 config")
         print("      Addresses")
         for addr in dev.Ip4Config.Addresses:
