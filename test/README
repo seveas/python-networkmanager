@@ -1,0 +1,17 @@
+WARNING: THE TESTS MESS WITH YOUR SETTINGS
+
+Some of the things the testsuite does:
+
+- Repeatedly kill all network connections
+- Delete, modify and add network connections
+- Change your hostname
+
+Think twice before you want to run this testsuire. And read the tests to see
+what they do.
+
+The following tests are safe to run, as they only read data:
+
+test_accesspoint.py
+test_activeconnection.py
+test_devices.py
+test_ipconfig.py
