@@ -24,7 +24,7 @@ try:
     def debug(msg, data):
         sys.stderr.write(msg + "\n")
         sys.stderr.write(repr(data)+"\n")
-except:
+except KeyError:
     debug = lambda *args: None
 
 auto_reconnect = True
