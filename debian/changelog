@@ -1,3 +1,9 @@
+python-networkmanager (2.0.0-1) zesty; urgency=medium
+
+  * New upstream release
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Mon, 06 Mar 2017 22:35:03 +0100
+
 python-networkmanager (1.2.1-1) xenial; urgency=medium
 
   * New upstream release 
