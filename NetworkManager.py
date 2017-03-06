@@ -15,6 +15,77 @@ import time
 import weakref
 import xml.etree.ElementTree as etree
 
+class ObjectVanished(Exception):
+    def __init__(self, obj):
+        self.obj = obj
+        super(ObjectVanished, self).__init__(obj.object_path)
+
+class SignalDispatcher(object):
+    def __init__(self):
+        self.handlers = {}
+        self.args = {}
+        self.interfaces = set()
+        self.setup = False
+
+    def setup_signals(self):
+        if not self.setup:
+            bus = dbus.SystemBus()
+            for interface in self.interfaces:
+                bus.add_signal_receiver(self.handle_signal, dbus_interface=interface, interface_keyword='interface', member_keyword='signal', path_keyword='path')
+            self.setup = True
+        self.listen_for_restarts()
+
+    def listen_for_restarts(self):
+        # If we have a mainloop, listen for disconnections
+        if not NMDbusInterface.last_disconnect and dbus.get_default_main_loop():
+           dbus.SystemBus().add_signal_receiver(self.handle_restart, 'NameOwnerChanged', 'org.freedesktop.DBus')
+           NMDbusInterface.last_disconnect = 1
+
+    def add_signal_receiver(self, interface, signal, obj, func, args, kwargs):
+        self.setup_signals()
+        key = (interface, signal)
+        if key not in self.handlers:
+            self.handlers[key] = []
+        self.handlers[key].append((obj, func, args, kwargs))
+
+    def handle_signal(self, *args, **kwargs):
+        key = (kwargs['interface'], kwargs['signal'])
+        skwargs = {}
+        if key not in self.handlers:
+            return
+        sender = fixups.base_to_python(kwargs['path'])
+        for arg, (name, signature) in zip(args, self.args[key]):
+            skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
+        to_delete = []
+        for pos, (match, receiver, rargs, rkwargs) in enumerate(self.handlers[key]):
+            try:
+                match == sender
+            except ObjectVanished:
+                to_delete.append(pos)
+                continue
+            if match == sender:
+                rkwargs['interface'] = kwargs['interface']
+                rkwargs['signal'] = kwargs['signal']
+                rkwargs.update(skwargs)
+                receiver(sender, *rargs, **rkwargs)
+        for pos in reversed(to_delete):
+            self.handlers[key].pop(pos)
+
+    def handle_restart(self, name, old, new):
+        if str(new) == "" or str(name) != 'org.freedesktop.NetworkManager':
+            return
+        NMDbusInterface.last_disconnect = time.time()
+        for key in handlers:
+            val, handlers[key] = handlers[key], []
+            for obj, func, kwargs in handlers[key]:
+                try:
+                    # This resets the object path if needed
+                    key.proxy
+                    self.add_signal_receiver(key[0], key[1], obj, func, kwargs)
+                except ObjectVanished:
+                    pass
+SignalDispatcher = SignalDispatcher()
+
 # We completely dynamically generate all classes using introspection data. As
 # this is done at import time, use a special dbus connection that does not get
 # in the way of setting a mainloop and doing async stuff later.
@@ -29,10 +100,11 @@ class NMDbusInterfaceType(type):
         attrs['dbus_service'] = type_.dbus_service
         attrs['properties'] = []
         attrs['introspection_data'] = None
+        attrs['signals'] = []
 
         # Derive the interface name from the name of the class, but let classes
         # override it if needed
-        if 'interface_names' not in attrs and name != 'NMDbusInterface':
+        if 'interface_names' not in attrs and 'NMDbusInterface' not in name:
             attrs['interface_names'] = ['org.freedesktop.NetworkManager.%s' % name]
             for base in bases:
                 if hasattr(base, 'interface_names'):
@@ -43,6 +115,9 @@ class NMDbusInterfaceType(type):
                 if hasattr(base, 'interface_names'):
                     attrs['interface_names'] += base.interface_names
                     break
+
+        if 'interface_names' in attrs:
+            SignalDispatcher.interfaces.update(attrs['interface_names'])
 
         # If we know where to find this object, let's introspect it and
         # generate properties and methods
@@ -61,6 +136,10 @@ class NMDbusInterfaceType(type):
                             if aname in attrs:
                                 aname = '_' + aname
                             attrs[aname] = type_.make_method(name, element.attrib['name'], item.attrib, list(item))
+                        elif item.tag == 'signal':
+                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib['name'], arg.attrib['type']) for arg in item]
+                            attrs['On' + item.attrib['name']] = type_.make_signal(name, element.attrib['name'], item.attrib)
+                            attrs['signals'].append(item.attrib['name'])
 
         klass = super(NMDbusInterfaceType, type_).__new__(type_, name, bases, attrs)
         return klass
@@ -69,20 +148,30 @@ class NMDbusInterfaceType(type):
     def make_property(klass, interface, attrib):
         name = attrib['name']
         def get_func(self):
-            data = self.proxy.Get(interface, name, dbus_interface='org.freedesktop.DBus.Properties')
+            try:
+                data = self.proxy.Get(interface, name, dbus_interface='org.freedesktop.DBus.Properties')
+            except dbus.exceptions.DBusException as e:
+                if e.get_dbus_name() == 'org.freedesktop.DBus.Error.UnknownMethod':
+                    raise ObjectVanished(self)
+                raise
             return fixups.to_python(klass, 'Get', name, data, attrib['type'])
         if attrib['access'] == 'read':
             return property(get_func)
         def set_func(self, value):
             value = fixups.to_dbus(klass, 'Set', name, value, attrib['type'])
-            return self.proxy.Set(interface, name, value, dbus_interface='org.freedesktop.DBus.Properties')
+            try:
+                return self.proxy.Set(interface, name, value, dbus_interface='org.freedesktop.DBus.Properties')
+            except dbus.exceptions.DBusException as e:
+                if e.get_dbus_name() == 'org.freedesktop.DBus.Error.UnknownMethod':
+                    raise ObjectVanished(self)
+                raise
         return property(get_func, set_func)
 
     @staticmethod
     def make_method(klass, interface, attrib, args):
         name = attrib['name']
         outargs = [x for x in args if x.tag == 'arg' and x.attrib['direction'] == 'out']
-        outargstr = ', '.join([x.attrib['name'] for x in outargs])
+        outargstr = ', '.join([x.attrib['name'] for x in outargs]) or 'ret'
         args = [x for x in args if x.tag == 'arg' and x.attrib['direction'] == 'in']
         argstr = ', '.join([x.attrib['name'] for x in args])
         ret = {}
@@ -91,22 +180,34 @@ class NMDbusInterfaceType(type):
             argname = arg.attrib['name']
             signature = arg.attrib['type']
             code += "    %s = fixups.to_dbus('%s', '%s', '%s', %s, '%s')\n" % (argname, klass, name, argname, argname, signature)
-        if not outargs:
-            code += "    return dbus.Interface(self.proxy, '%s').%s(%s)\n" % (interface, name, argstr)
-        else:
-            code += "    %s = dbus.Interface(self.proxy, '%s').%s(%s)\n" % (outargstr, interface, name, argstr)
-            for arg in outargs:
-                argname = arg.attrib['name']
-                signature = arg.attrib['type']
-                code += "    %s = fixups.to_python('%s', '%s', '%s', %s, '%s')\n" % (argname, klass, name, argname, argname, signature)
-            code += "    return (%s)" % outargstr
+        code += "    try:\n"
+        code += "        %s = dbus.Interface(self.proxy, '%s').%s(%s)\n" % (outargstr, interface, name, argstr)
+        code += "    except dbus.exceptions.DBusException as e:\n"
+        code += "        if e.get_dbus_name() == 'org.freedesktop.DBus.Error.UnknownMethod':\n"
+        code += "            raise ObjectVanished(self)\n"
+        code += "        raise\n"
+        for arg in outargs:
+            argname = arg.attrib['name']
+            signature = arg.attrib['type']
+            code += "    %s = fixups.to_python('%s', '%s', '%s', %s, '%s')\n" % (argname, klass, name, argname, argname, signature)
+        code += "    return (%s)" % outargstr
         exec(code, globals(), ret)
         return ret[name]
+
+    @staticmethod
+    def make_signal(klass, interface, attrib):
+        name = attrib['name']
+        ret = {}
+        code = "def On%s(self, func, *args, **kwargs):" % name
+        code += "    SignalDispatcher.add_signal_receiver('%s', '%s', self, func, args, kwargs)"  % (interface, name)
+        exec(code, globals(), ret)
+        return ret['On' + name]
 
 @six.add_metaclass(NMDbusInterfaceType)
 class NMDbusInterface(object):
     object_path = None
     last_disconnect = 0
+    is_transient = False
 
     def __new__(klass, object_path=None):
         # If we didn't introspect this one at definition time, let's do it now.
@@ -125,6 +226,12 @@ class NMDbusInterface(object):
                             if hasattr(klass, aname):
                                 aname = '_' + aname
                             setattr(klass, aname, type(klass).make_method(klass.__name__, element.attrib['name'], item.attrib, list(item)))
+                        elif item.tag == 'signal':
+                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib['name'], arg.attrib['type']) for arg in item]
+                            setattr(klass, 'On' + item.attrib['name'], type(klass).make_signal(klass.__name__, element.attrib['name'], item.attrib))
+                            klass.signals.append(item.attrib['name'])
+
+        SignalDispatcher.listen_for_restarts()
         return super(NMDbusInterface, klass).__new__(klass)
 
     def __init__(self, object_path=None):
@@ -132,14 +239,6 @@ class NMDbusInterface(object):
             object_path = object_path.object_path
         self.object_path = self.object_path or object_path
         self._proxy = None
-
-        # If we have a mainloop, listen for disconnections
-        if not self.last_disconnect:
-            try:
-                dbus.SystemBus().add_signal_receiver(lambda *args: NMDbusInterface.handle_disconnect, 'NameOwnerChanged', 'org.freedesktop.DBus')
-                NMDbusInterface.last_disconnect = 1
-            except RuntimeError:
-                pass
 
     def __eq__(self, other):
         return isinstance(other, NMDbusInterface) and self.object_path and other.object_path == self.object_path
@@ -150,21 +249,36 @@ class NMDbusInterface(object):
             self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path)
             self._proxy.created = time.time()
         elif self._proxy.created < self.last_disconnect:
-            # FIXME: validate whether object_path is still correct for Device/Connection objects
-            # For ActiveConnection/Ip*Config/AccessPoint/PPP objects, throw an error
+            if self.is_transient:
+                raise ObjectVanished(self)
+            obj = type(self(self.object_path))
+            if obj != self:
+                # We have a new object id, find it!
+                for obj in self.all():
+                    if obj == self:
+                        self.object_path = obj.object_path
+                        break
+                else:
+                    raise ObjectVanished(self)
             self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path)
             self._proxy.created = time.time()
         return self._proxy
 
-    @classmethod
-    def handle_disconnect(klass, name, old, new):
-        if str(new) == "" or str(name) != 'org.freedesktop.NetworkManager':
-            return
-        klass.last_disconnect = time.time()
+    # Backwards compatibility interface
+    def connect_to_signal(self, signal, handler, *args, **kwargs):
+        return getattr(self, 'On' + signal)(handler, *args, **kwargs)
+
+class TransientNMDbusInterface(NMDbusInterface):
+    is_transient = True
 
 class NetworkManager(NMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager']
     object_path = '/org/freedesktop/NetworkManager'
+
+    # noop method for backward compatibility. It is no longer necessary to call
+    # this but let's not break code that does so.
+    def auto_reconnect(self):
+        pass
 
 class Settings(NMDbusInterface):
     object_path = '/org/freedesktop/NetworkManager/Settings'
@@ -192,10 +306,14 @@ class Connection(NMDbusInterface):
                 raise
             return {key: {} for key in settings}
 
+    @staticmethod
+    def all():
+        return Settings.ListConnections()
+
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.uuid == other.uuid
 
-class ActiveConnection(NMDbusInterface):
+class ActiveConnection(TransientNMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager.Connection.Active']
     def __new__(klass, object_path):
         if klass == ActiveConnection:
@@ -215,9 +333,12 @@ class Device(NMDbusInterface):
     def __new__(klass, object_path):
         if klass == Device:
             # Automatically specialize the device
-            obj = dbus.SystemBus().get_object(klass.dbus_service, object_path)
-            klass = device_class(obj.Get('org.freedesktop.NetworkManager.Device', 'DeviceType', dbus_interface='org.freedesktop.DBus.Properties'))
-            return klass.__new__(klass, object_path)
+            try:
+                obj = dbus.SystemBus().get_object(klass.dbus_service, object_path)
+                klass = device_class(obj.Get('org.freedesktop.NetworkManager.Device', 'DeviceType', dbus_interface='org.freedesktop.DBus.Properties'))
+                return klass.__new__(klass, object_path)
+            except ObjectVanished:
+                pass
         return super(Device, klass).__new__(klass, object_path)
 
     @staticmethod
@@ -274,17 +395,23 @@ class Wimax(Device): pass
 class Wired(Device): pass
 class Wireless(Device): pass
 
-class NSP(NMDbusInterface):
+class NSP(TransientNMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager.Wimax.NSP']
 
 class AccessPoint(NMDbusInterface):
+    @staticmethod
+    def all():
+        for device in Device.all():
+            if isinstance(device, Wireless):
+                for ap in device.AccessPoints:
+                    yield ap
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.HwAddress == other.HwAddress
 
-class IP4Config(NMDbusInterface): pass
-class IP6Config(NMDbusInterface): pass
-class DHCP4Config(NMDbusInterface): pass
-class DHCP6Config(NMDbusInterface): pass
+class IP4Config(TransientNMDbusInterface): pass
+class IP6Config(TransientNMDbusInterface): pass
+class DHCP4Config(TransientNMDbusInterface): pass
+class DHCP6Config(TransientNMDbusInterface): pass
 
 # These three are interfaces that must be provided to NetworkManager. Keep them
 # as comments for documentation purposes.
@@ -410,6 +537,10 @@ class fixups(object):
                 val['ipv6']['addresses'] = [fixups.addrconf_to_python(addr,socket.AF_INET6) for addr in val['ipv6']['addresses']]
                 val['ipv6']['routes'] = [fixups.route_to_python(route,socket.AF_INET6) for route in val['ipv6']['routes']]
                 val['ipv6']['dns'] = [fixups.addr_to_python(addr,socket.AF_INET6) for addr in val['ipv6']['dns']]
+            return val
+        if method == 'PropertiesChanged':
+            for prop in val:
+                val[prop] = fixups.to_python(klass, 'Get', prop, val[prop], None)
         return val
 
     @staticmethod
@@ -421,6 +552,9 @@ class fixups(object):
         if isinstance(val, (dbus.Dictionary, dict)):
             return dict([(fixups.base_to_python(x), fixups.base_to_python(y)) for x,y in val.items()])
         if isinstance(val, dbus.ObjectPath):
+            for obj in (NetworkManager, Settings, AgentManager):
+                if val == obj.object_path:
+                    return obj
             if val.startswith('/org/freedesktop/NetworkManager/'):
                 classname = val.split('/')[4]
                 classname = {
