@@ -13,6 +13,7 @@ import socket
 import struct
 import sys
 import time
+import warnings
 import weakref
 import xml.etree.ElementTree as etree
 
@@ -605,7 +606,12 @@ class fixups(object):
 
     @staticmethod
     def ssid_to_python(ssid):
-        return bytes().join(ssid).decode('utf-8')
+        try:
+            return bytes().join(ssid).decode('utf-8')
+        except UnicodeDecodeError:
+            ssid = bytes().join(ssid).decode('utf-8', 'replace')
+            warnings.warn("Unable to decode ssid %s properly" % ssid, UnicodeWarning)
+            return ssid
 
     @staticmethod
     def ssid_to_dbus(ssid):
