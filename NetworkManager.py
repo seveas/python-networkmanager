@@ -471,6 +471,9 @@ class fixups(object):
                     settings[key]['cloned-mac-address'] = fixups.mac_to_dbus(settings[key]['cloned-mac-address'])
                 if 'bssid' in settings[key]:
                     settings[key]['bssid'] = fixups.mac_to_dbus(settings[key]['bssid'])
+                for cert in ['ca-cert', 'client-cert', 'phase2-ca-cert', 'phase2-client-cert', 'private-key']:
+                    if cert in settings[key]:
+                        settings[key][cert] = fixups.cert_to_dbus(settings[key][cert])
             if 'ssid' in settings.get('802-11-wireless', {}):
                 settings['802-11-wireless']['ssid'] = fixups.ssid_to_dbus(settings['802-11-wireless']['ssid'])
             if 'ipv4' in settings:
@@ -686,6 +689,14 @@ class fixups(object):
             fixups.addr_to_dbus(gateway,family),
             metric
         ]
+
+    @staticmethod
+    def cert_to_dbus(cert):
+        if not isinstance(cert, bytes):
+            if not cert.startswith('file://'):
+                cert = 'file://' + cert
+            cert = cert.encode('utf-8') + b'\0'
+        return [dbus.Byte(x) for x in cert]
 
 # Turn NetworkManager and Settings into singleton objects
 NetworkManager = NetworkManager()
