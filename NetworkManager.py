@@ -6,6 +6,7 @@
 
 import copy
 import dbus
+import dbus.service
 import os
 import six
 import socket
@@ -413,11 +414,36 @@ class IP6Config(TransientNMDbusInterface): pass
 class DHCP4Config(TransientNMDbusInterface): pass
 class DHCP6Config(TransientNMDbusInterface): pass
 
-# These three are interfaces that must be provided to NetworkManager. Keep them
+# Evil hack to work around not being able to specify a method name in the
+# dbus.service.method decorator.
+class SecretAgentType(type(dbus.service.Object)):
+    def __new__(type_, name, bases, attrs):
+        if bases != (dbus.service.Object,):
+            attrs['GetSecretsImpl'] = attrs.pop('GetSecrets')
+        return super(SecretAgentType, type_).__new__(type_, name, bases, attrs)
+
+@six.add_metaclass(SecretAgentType)
+class SecretAgent(dbus.service.Object):
+    object_path = '/org/freedesktop/NetworkManager/SecretAgent'
+    interface_name = 'org.freedesktop.NetworkManager.SecretAgent'
+
+    def __init__(self, identifier):
+        self.identifier = identifier
+        dbus.service.Object.__init__(self, dbus.SystemBus(), self.object_path)
+        AgentManager.Register(self.identifier)
+
+    @dbus.service.method(dbus_interface=interface_name, in_signature='a{sa{sv}}osasu', out_signature='a{sa{sv}}')
+    def GetSecrets(self, connection, connection_path, setting_name, hints, flags):
+        settings = fixups.to_python('SecretAgent', 'GetSecrets', 'connection', connection, 'a{sa{sv}}')
+        connection = fixups.to_python('SecretAgent', 'GetSecrets', 'connection_path', connection_path, 'o')
+        setting_name = fixups.to_python('SecretAgent', 'GetSecrets', 'setting_name', setting_name, 's')
+        hints = fixups.to_python('SecretAgent', 'GetSecrets', 'hints', hints, 'as')
+        return self.GetSecretsImpl(settings, connection, setting_name, hints, flags)
+
+# These two are interfaces that must be provided to NetworkManager. Keep them
 # as comments for documentation purposes.
 #
 # class PPP(NMDbusInterface): pass
-# class SecretAgent(NMDbusInterface): pass
 # class VPNPlugin(NMDbusInterface):
 #     interface_names = ['org.freedesktop.NetworkManager.VPN.Plugin']
 

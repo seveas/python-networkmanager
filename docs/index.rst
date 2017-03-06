@@ -184,5 +184,30 @@ interface, which gives you access to basic device properties. Note that you will
 `Wired <https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Wired.html>`_ and
 `Wireless <https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Wireless.html>`_
 
+.. class:: SecretAgent
+
+The NetworkManager daemon can ask separate programs, called agents, for secrets
+if it needs them. The NetworkManager applet and the `nmcli` command-line tool
+are examples of such agents. You can also write such agents by subclassing the
+`SecretAgent` class and providing a `GetSecrets` method as in the following
+example, which returns a static password for each secret::
+
+    import dbus.mainloop.glib
+    import GObject
+    import NetworkManager
+
+    class MyAgent(NetworkManager.SecretAgent):
+        def GetSecrets(self, settings, connection, setting_name, hints, flags):
+            return {setting_name: {'secrets': {'password': 'TopSecret!'}}}
+
+    agent = MyAgent()
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    Gobject.MainLoop().run()
+
+Beware that NetworkManager will ask each agent in turn in what is in essence
+random order. Except it will prioritize the program that activated the
+connection. So if you want to make sure your agent is called first, activate
+the connection from the same application.
+
 .. toctree::
    :maxdepth: 2
