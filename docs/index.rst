@@ -27,20 +27,7 @@ simple as you think it is:
 NetworkManager exposes a lot of information via D-Bus and also allows full
 control of network settings. The full D-Bus interface can be found on
 `NetworkManager project website`_. All interfaces listed there have been
-wrapped in classes as listed below. With a few exceptions, they behave exactly
-like the D-Bus methods. These exceptions are for convenience and limited to
-this list:
-
-* IP addresses are returned as strings of the form :data:`1.2.3.4` instead of
-  network byte ordered integers.
-* Route metrics are returned in host byte order, so you can use them as
-  integers.
-* Mac addresses and BSSIDs are always returned as strings of the form
-  :data:`00:11:22:33:44:55` instead of byte sequences.
-* Wireless SSID's are returned as strings instead of byte sequences. They will
-  be decoded as UTF-8 data, so using any other encoding for your SSID will
-  result in errors.
-* DHCP options are turned into integers or booleans as appropriate
+wrapped in classes as listed below.
 
 .. function:: const(prefix, value)
 
@@ -61,6 +48,52 @@ translate them to text. For example:
 
 List of classes
 ---------------
+.. class:: ObjectVanished
+
+This Exception will be raised when you try to call a method or access a
+property on a dbus object that no longer exists. Objects can go missing if
+devices are removed, connections are disabled or NetworkManager is restarted.
+
+.. class:: NMDbusInterface
+
+This is the base class of all classes below. It handles the marshalling of data
+and the automatic creation of properties and methods.
+
+Each property, method and signal exposed via the D-Bus interface is
+automatically mirrored as an attribute of the actual classes. Moreover, the
+data is made slightly more usable by performing the following transformations
+on received and sent data.
+
+* IP addresses are returned as strings of the form :data:`1.2.3.4` instead of
+  network byte ordered integers.
+* Route metrics are returned in host byte order, so you can use them as
+  integers.
+* Mac addresses and BSSIDs are always returned as strings of the form
+  :data:`00:11:22:33:44:55` instead of byte sequences.
+* Wireless SSID's are returned as strings instead of byte sequences. They will
+  be decoded as UTF-8 data, so using any other encoding for your SSID will
+  result in errors.
+* DHCP options are turned into integers or booleans as appropriate
+* Signals can be connected to using calls to On\ *SignalName* functions.
+
+Here's a short example to illustrate:
+
+    >>> NetworkManager.NetworkManager.Version
+    '1.4.4'
+    >>> NetworkManager.NetworkManager.GetPermissions()
+    {'org.freedesktop.NetworkManager.checkpoint-rollback': 'auth',
+     'org.freedesktop.NetworkManager.enable-disable-network': 'yes',
+     ...}
+    # Must have a mainloop to use signals
+    >>> import dbus.mainloop.glib
+    >>> dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    >>> NetworkManager.Networkmanager.OnStateChanged(handle_state_change)
+
+.. class:: TransientNMDbusInterface
+
+Subclasses of this class, which are ActiveConnection, NSP, IP[46]Config and
+DHCP[46]Config never survive a NetworkManager restart. Other objects may
+survive a restart, but get a different object path.
 
 .. class:: NetworkManager
 
