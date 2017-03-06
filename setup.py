@@ -6,7 +6,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name = "python-networkmanager",
-      version = "1.2.1",
+      version = "2.0.0",
       author = "Dennis Kaarsemaker",
       author_email = "dennis@kaarsemaker.net",
       url = "http://github.com/seveas/python-networkmanager",
