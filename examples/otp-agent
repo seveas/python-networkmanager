@@ -1,0 +1,71 @@
+#!/usr/bin/python3
+#
+# Automate vpn connections that require a one-time password.
+# Requirements:
+# - secretstorage (find on pypi)
+# - pyotp (likewise)
+#
+# usage: ./otp-agent name-of-connection
+#
+# The connection will be activated and when networkmanager asks for a secret,
+# it will be provided. If the secret isn't known yet, it will be asked and
+# stored with the secretstorage api (so in e.g. your gnome keyring)
+
+import dbus.mainloop.glib
+from gi.repository import GObject
+import NetworkManager
+import pyotp
+import traceback
+import secretstorage
+import sys
+
+def main():
+    print("Connecting to %s" % sys.argv[1])
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    loop = GObject.MainLoop()
+    agent = SecretAgent(loop)
+    for connection in NetworkManager.Settings.ListConnections():
+        settings = connection.GetSettings()['connection']
+        if settings['id'] == sys.argv[1]:
+            NetworkManager.NetworkManager.ActivateConnection(connection, "/", "/")
+            loop.run()
+            break
+    else:
+        print("Connection %s not found" % sys.argv[1])
+
+class SecretAgent(NetworkManager.SecretAgent):
+    def __init__(self, loop):
+        self.loop = loop
+        self.collection = secretstorage.get_default_collection(secretstorage.dbus_init())
+        super(SecretAgent, self).__init__('net.seveas.otp-agent')
+
+    def GetSecrets(self, settings, connection, setting_name, hints, flags):
+        try:
+            print("NetworkManager is asking us for a secret")
+            if setting_name != 'vpn':
+                return {}
+            attrs = {
+                'xdg:schema': 'net.seveas.otp-agent',
+                'hostname': settings['vpn']['data']['remote'],
+            }
+            items = list(self.collection.search_items(attrs))
+            if not items:
+                print("No secrets found yet, asking user")
+                secret = input("Enter secret code for %s: " % settings['vpn']['data']['remote'])
+                self.collection.create_item(settings['vpn']['data']['remote'], attrs, secret)
+                items = list(self.collection.search_items(attrs))
+            else:
+                print("Found secret key, generating otp code")
+            secret = items[0].get_secret().decode('ascii')
+            otp = pyotp.TOTP(secret).now()
+            print("otp code: %s" % otp)
+            return {setting_name: {'secrets': {'password': otp}}}
+        except:
+            import traceback
+            traceback.print_exc()
+            return {}
+        finally:
+            self.loop.quit()
+
+if __name__ == '__main__':
+    main()
