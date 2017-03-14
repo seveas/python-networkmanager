@@ -139,7 +139,7 @@ class NMDbusInterfaceType(type):
                                 aname = '_' + aname
                             attrs[aname] = type_.make_method(name, element.attrib['name'], item.attrib, list(item))
                         elif item.tag == 'signal':
-                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib['name'], arg.attrib['type']) for arg in item]
+                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib.get('name','unknown'), arg.attrib['type']) for arg in item]
                             attrs['On' + item.attrib['name']] = type_.make_signal(name, element.attrib['name'], item.attrib)
                             attrs['signals'].append(item.attrib['name'])
 
@@ -229,7 +229,7 @@ class NMDbusInterface(object):
                                 aname = '_' + aname
                             setattr(klass, aname, type(klass).make_method(klass.__name__, element.attrib['name'], item.attrib, list(item)))
                         elif item.tag == 'signal':
-                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib['name'], arg.attrib['type']) for arg in item]
+                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib.get('name','unknown'), arg.attrib['type']) for arg in item]
                             setattr(klass, 'On' + item.attrib['name'], type(klass).make_signal(klass.__name__, element.attrib['name'], item.attrib))
                             klass.signals.append(item.attrib['name'])
 
