@@ -53,11 +53,16 @@ class SignalDispatcher(object):
     def handle_signal(self, *args, **kwargs):
         key = (kwargs['interface'], kwargs['signal'])
         skwargs = {}
+        sargs = []
         if key not in self.handlers:
             return
         sender = fixups.base_to_python(kwargs['path'])
         for arg, (name, signature) in zip(args, self.args[key]):
-            skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
+            if name:
+                skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
+            else:
+                # Older NetworkManager versions don't supply attribute names. Hope for the best.
+                sargs.append(fixups.to_python(type(sender).__name__, kwargs['signal'], None, arg, signature))
         to_delete = []
         for pos, (match, receiver, rargs, rkwargs) in enumerate(self.handlers[key]):
             try:
@@ -69,7 +74,7 @@ class SignalDispatcher(object):
                 rkwargs['interface'] = kwargs['interface']
                 rkwargs['signal'] = kwargs['signal']
                 rkwargs.update(skwargs)
-                receiver(sender, *rargs, **rkwargs)
+                receiver(sender, *(sargs + rargs), **rkwargs)
         for pos in reversed(to_delete):
             self.handlers[key].pop(pos)
 
@@ -139,7 +144,7 @@ class NMDbusInterfaceType(type):
                                 aname = '_' + aname
                             attrs[aname] = type_.make_method(name, element.attrib['name'], item.attrib, list(item))
                         elif item.tag == 'signal':
-                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib['name'], arg.attrib['type']) for arg in item]
+                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib.get('name',None), arg.attrib['type']) for arg in item]
                             attrs['On' + item.attrib['name']] = type_.make_signal(name, element.attrib['name'], item.attrib)
                             attrs['signals'].append(item.attrib['name'])
 
@@ -229,7 +234,7 @@ class NMDbusInterface(object):
                                 aname = '_' + aname
                             setattr(klass, aname, type(klass).make_method(klass.__name__, element.attrib['name'], item.attrib, list(item)))
                         elif item.tag == 'signal':
-                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib['name'], arg.attrib['type']) for arg in item]
+                            SignalDispatcher.args[(element.attrib['name'], item.attrib['name'])] = [(arg.attrib.get('name',None), arg.attrib['type']) for arg in item]
                             setattr(klass, 'On' + item.attrib['name'], type(klass).make_signal(klass.__name__, element.attrib['name'], item.attrib))
                             klass.signals.append(item.attrib['name'])
 
