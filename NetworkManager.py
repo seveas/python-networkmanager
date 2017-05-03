@@ -206,7 +206,7 @@ class NMDbusInterfaceType(type):
         name = attrib['name']
         ret = {}
         code = "def On%s(self, func, *args, **kwargs):" % name
-        code += "    SignalDispatcher.add_signal_receiver('%s', '%s', self, func, args, kwargs)"  % (interface, name)
+        code += "    SignalDispatcher.add_signal_receiver('%s', '%s', self, func, list(args), kwargs)"  % (interface, name)
         exec(code, globals(), ret)
         return ret['On' + name]
 
