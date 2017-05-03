@@ -82,13 +82,13 @@ class SignalDispatcher(object):
         if str(new) == "" or str(name) != 'org.freedesktop.NetworkManager':
             return
         NMDbusInterface.last_disconnect = time.time()
-        for key in handlers:
-            val, handlers[key] = handlers[key], []
-            for obj, func, kwargs in handlers[key]:
+        for key in self.handlers:
+            val, self.handlers[key] = self.handlers[key], []
+            for obj, func, args, kwargs in val:
                 try:
                     # This resets the object path if needed
-                    key.proxy
-                    self.add_signal_receiver(key[0], key[1], obj, func, kwargs)
+                    obj.proxy
+                    self.add_signal_receiver(key[0], key[1], obj, func, args, kwargs)
                 except ObjectVanished:
                     pass
 SignalDispatcher = SignalDispatcher()
@@ -258,15 +258,9 @@ class NMDbusInterface(object):
         elif self._proxy.created < self.last_disconnect:
             if self.is_transient:
                 raise ObjectVanished(self)
-            obj = type(self(self.object_path))
+            obj = type(self)(self.object_path)
             if obj != self:
-                # We have a new object id, find it!
-                for obj in self.all():
-                    if obj == self:
-                        self.object_path = obj.object_path
-                        break
-                else:
-                    raise ObjectVanished(self)
+                self.object_path = obj.object_path
             self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path)
             self._proxy.created = time.time()
         return self._proxy
