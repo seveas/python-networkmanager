@@ -74,7 +74,7 @@ class SignalDispatcher(object):
                 rkwargs['interface'] = kwargs['interface']
                 rkwargs['signal'] = kwargs['signal']
                 rkwargs.update(skwargs)
-                receiver(sender, *(sargs + rargs), **rkwargs)
+                receiver(sender, *(sargs + list(rargs)), **rkwargs)
         for pos in reversed(to_delete):
             self.handlers[key].pop(pos)
 
