@@ -78,6 +78,7 @@ on received and sent data.
 
 Here's a short example to illustrate:
 
+    >>> import NetworkManager
     >>> NetworkManager.NetworkManager.Version
     '1.4.4'
     >>> NetworkManager.NetworkManager.GetPermissions()
@@ -87,7 +88,7 @@ Here's a short example to illustrate:
     # Must have a mainloop to use signals
     >>> import dbus.mainloop.glib
     >>> dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    >>> NetworkManager.Networkmanager.OnStateChanged(handle_state_change)
+    >>> NetworkManager.NetworkManager.OnStateChanged(handle_state_change)
 
 .. class:: TransientNMDbusInterface
 
