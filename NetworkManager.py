@@ -375,6 +375,12 @@ def device_class(typ):
          NM_DEVICE_TYPE_VXLAN: Vxlan,
          NM_DEVICE_TYPE_WIFI: Wireless,
          NM_DEVICE_TYPE_WIMAX: Wimax,
+         NM_DEVICE_TYPE_MACSEC: MacSec,
+         NM_DEVICE_TYPE_DUMMY: Dummy,
+         NM_DEVICE_TYPE_PPP: PPP,
+         NM_DEVICE_TYPE_OVS_INTERFACE: OvsIf,
+         NM_DEVICE_TYPE_OVS_PORT: OvsPort,
+         NM_DEVICE_TYPE_OVS_BRIDGE: OvsBridge
      }[typ]
 
 class Adsl(Device): pass
@@ -395,6 +401,12 @@ class Vxlan(Device): pass
 class Wimax(Device): pass
 class Wired(Device): pass
 class Wireless(Device): pass
+class MacSec(Device): pass
+class Dummy(Device): pass
+class PPP(Device): pass
+class OvsIf(Device): pass
+class OvsPort(Device): pass
+class OvsBridge(Device): pass
 
 class NSP(TransientNMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager.Wimax.NSP']
