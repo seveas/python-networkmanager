@@ -281,6 +281,9 @@ class NetworkManager(NMDbusInterface):
     def auto_reconnect(self):
         pass
 
+class Statistics(NMDbusInterface):
+    object_path = '/org/freedesktop/NetworkManager/Statistics'
+
 class Settings(NMDbusInterface):
     object_path = '/org/freedesktop/NetworkManager/Settings'
 
@@ -331,6 +334,7 @@ class VPNConnection(ActiveConnection):
     interface_names = ['org.freedesktop.NetworkManager.VPN.Connection']
 
 class Device(NMDbusInterface):
+    interface_names = ['org.freedesktop.NetworkManager.Device', 'org.freedesktop.NetworkManager.Device.Statistics']
     def __new__(klass, object_path):
         if klass == Device:
             # Automatically specialize the device
