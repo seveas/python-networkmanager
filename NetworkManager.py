@@ -338,7 +338,7 @@ class Device(NMDbusInterface):
                 obj = dbus.SystemBus().get_object(klass.dbus_service, object_path)
                 klass = device_class(obj.Get('org.freedesktop.NetworkManager.Device', 'DeviceType', dbus_interface='org.freedesktop.DBus.Properties'))
                 return klass.__new__(klass, object_path)
-            except ObjectVanished:
+            except (ObjectVanished, dbus.exceptions.DBusException):
                 pass
         return super(Device, klass).__new__(klass, object_path)
 
