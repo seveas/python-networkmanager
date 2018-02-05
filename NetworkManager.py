@@ -305,7 +305,7 @@ class Connection(NMDbusInterface):
         except dbus.exceptions.DBusException as e:
             if e.get_dbus_name() != 'org.freedesktop.NetworkManager.AgentManager.NoSecrets':
                 raise
-            return {key: {} for key in settings}
+            return {}
 
     @staticmethod
     def all():
