@@ -356,26 +356,26 @@ class Device(NMDbusInterface):
 
 
 def device_class(typ):
-     return {
-         NM_DEVICE_TYPE_ADSL: Adsl,
-         NM_DEVICE_TYPE_BOND: Bond,
-         NM_DEVICE_TYPE_BRIDGE: Bridge,
-         NM_DEVICE_TYPE_BT: Bluetooth,
-         NM_DEVICE_TYPE_ETHERNET: Wired,
-         NM_DEVICE_TYPE_GENERIC: Generic,
-         NM_DEVICE_TYPE_INFINIBAND: Infiniband,
-         NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
-         NM_DEVICE_TYPE_MACVLAN: Macvlan,
-         NM_DEVICE_TYPE_MODEM: Modem,
-         NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
-         NM_DEVICE_TYPE_TEAM: Team,
-         NM_DEVICE_TYPE_TUN: Tun,
-         NM_DEVICE_TYPE_VETH: Veth,
-         NM_DEVICE_TYPE_VLAN: Vlan,
-         NM_DEVICE_TYPE_VXLAN: Vxlan,
-         NM_DEVICE_TYPE_WIFI: Wireless,
-         NM_DEVICE_TYPE_WIMAX: Wimax,
-     }[typ]
+    return {
+        NM_DEVICE_TYPE_ADSL: Adsl,
+        NM_DEVICE_TYPE_BOND: Bond,
+        NM_DEVICE_TYPE_BRIDGE: Bridge,
+        NM_DEVICE_TYPE_BT: Bluetooth,
+        NM_DEVICE_TYPE_ETHERNET: Wired,
+        NM_DEVICE_TYPE_GENERIC: Generic,
+        NM_DEVICE_TYPE_INFINIBAND: Infiniband,
+        NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
+        NM_DEVICE_TYPE_MACVLAN: Macvlan,
+        NM_DEVICE_TYPE_MODEM: Modem,
+        NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
+        NM_DEVICE_TYPE_TEAM: Team,
+        NM_DEVICE_TYPE_TUN: Tun,
+        NM_DEVICE_TYPE_VETH: Veth,
+        NM_DEVICE_TYPE_VLAN: Vlan,
+        NM_DEVICE_TYPE_VXLAN: Vxlan,
+        NM_DEVICE_TYPE_WIFI: Wireless,
+        NM_DEVICE_TYPE_WIMAX: Wimax,
+    }[typ]
 
 class Adsl(Device): pass
 class Bluetooth(Device): pass
