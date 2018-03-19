@@ -305,7 +305,7 @@ class Connection(NMDbusInterface):
         except dbus.exceptions.DBusException as e:
             if e.get_dbus_name() != 'org.freedesktop.NetworkManager.AgentManager.NoSecrets':
                 raise
-            return {key: {} for key in settings}
+            return {}
 
     @staticmethod
     def all():
@@ -338,7 +338,7 @@ class Device(NMDbusInterface):
                 obj = dbus.SystemBus().get_object(klass.dbus_service, object_path)
                 klass = device_class(obj.Get('org.freedesktop.NetworkManager.Device', 'DeviceType', dbus_interface='org.freedesktop.DBus.Properties'))
                 return klass.__new__(klass, object_path)
-            except ObjectVanished:
+            except (ObjectVanished, dbus.exceptions.DBusException):
                 pass
         return super(Device, klass).__new__(klass, object_path)
 
@@ -356,26 +356,26 @@ class Device(NMDbusInterface):
 
 
 def device_class(typ):
-     return {
-         NM_DEVICE_TYPE_ADSL: Adsl,
-         NM_DEVICE_TYPE_BOND: Bond,
-         NM_DEVICE_TYPE_BRIDGE: Bridge,
-         NM_DEVICE_TYPE_BT: Bluetooth,
-         NM_DEVICE_TYPE_ETHERNET: Wired,
-         NM_DEVICE_TYPE_GENERIC: Generic,
-         NM_DEVICE_TYPE_INFINIBAND: Infiniband,
-         NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
-         NM_DEVICE_TYPE_MACVLAN: Macvlan,
-         NM_DEVICE_TYPE_MODEM: Modem,
-         NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
-         NM_DEVICE_TYPE_TEAM: Team,
-         NM_DEVICE_TYPE_TUN: Tun,
-         NM_DEVICE_TYPE_VETH: Veth,
-         NM_DEVICE_TYPE_VLAN: Vlan,
-         NM_DEVICE_TYPE_VXLAN: Vxlan,
-         NM_DEVICE_TYPE_WIFI: Wireless,
-         NM_DEVICE_TYPE_WIMAX: Wimax,
-     }[typ]
+    return {
+        NM_DEVICE_TYPE_ADSL: Adsl,
+        NM_DEVICE_TYPE_BOND: Bond,
+        NM_DEVICE_TYPE_BRIDGE: Bridge,
+        NM_DEVICE_TYPE_BT: Bluetooth,
+        NM_DEVICE_TYPE_ETHERNET: Wired,
+        NM_DEVICE_TYPE_GENERIC: Generic,
+        NM_DEVICE_TYPE_INFINIBAND: Infiniband,
+        NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
+        NM_DEVICE_TYPE_MACVLAN: Macvlan,
+        NM_DEVICE_TYPE_MODEM: Modem,
+        NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
+        NM_DEVICE_TYPE_TEAM: Team,
+        NM_DEVICE_TYPE_TUN: Tun,
+        NM_DEVICE_TYPE_VETH: Veth,
+        NM_DEVICE_TYPE_VLAN: Vlan,
+        NM_DEVICE_TYPE_VXLAN: Vxlan,
+        NM_DEVICE_TYPE_WIFI: Wireless,
+        NM_DEVICE_TYPE_WIMAX: Wimax,
+    }[typ]
 
 class Adsl(Device): pass
 class Bluetooth(Device): pass
