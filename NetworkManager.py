@@ -56,13 +56,17 @@ class SignalDispatcher(object):
         sargs = []
         if key not in self.handlers:
             return
-        sender = fixups.base_to_python(kwargs['path'])
-        for arg, (name, signature) in zip(args, self.args[key]):
-            if name:
-                skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
-            else:
-                # Older NetworkManager versions don't supply attribute names. Hope for the best.
-                sargs.append(fixups.to_python(type(sender).__name__, kwargs['signal'], None, arg, signature))
+        try:
+            sender = fixups.base_to_python(kwargs['path'])
+            for arg, (name, signature) in zip(args, self.args[key]):
+                if name:
+                    skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
+                else:
+                    # Older NetworkManager versions don't supply attribute names. Hope for the best.
+                    sargs.append(fixups.to_python(type(sender).__name__, kwargs['signal'], None, arg, signature))
+        except dbus.exceptions.DBusException:
+            # This happens if the sender went away. Tough luck, no signal for you.
+            return
         to_delete = []
         for pos, (match, receiver, rargs, rkwargs) in enumerate(self.handlers[key]):
             try:
@@ -82,6 +86,7 @@ class SignalDispatcher(object):
         if str(new) == "" or str(name) != 'org.freedesktop.NetworkManager':
             return
         NMDbusInterface.last_disconnect = time.time()
+        time.sleep(1) # Give NetworkManager a bit of time to start and rediscover itself.
         for key in self.handlers:
             val, self.handlers[key] = self.handlers[key], []
             for obj, func, args, kwargs in val:
@@ -259,7 +264,7 @@ class NMDbusInterface(object):
             if self.is_transient:
                 raise ObjectVanished(self)
             obj = type(self)(self.object_path)
-            if obj != self:
+            if obj.object_path != self.object_path:
                 self.object_path = obj.object_path
             self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path)
             self._proxy.created = time.time()
