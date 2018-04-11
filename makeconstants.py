@@ -5,9 +5,10 @@ import re
 
 enum_regex = re.compile(r'typedef enum(?:\s+[a-zA-Z]+)?\s*\{(.*?)\}', re.DOTALL)
 comment_regex = re.compile(r'/\*.*?\*/', re.DOTALL)
-headers = ['/usr/include/NetworkManager/NetworkManager.h',
+headers = [ '/usr/include/libnm/nm-dbus-interface.h',
            '/usr/include/NetworkManager/NetworkManagerVPN.h',
            '/usr/include/libnm-glib/nm-secret-agent.h']
+
 for h in headers:
     for enum in enum_regex.findall(open(h).read()):
         enum = comment_regex.sub('', enum)
@@ -17,7 +18,7 @@ for h in headers:
                 continue
             if '=' in key:
                 key, val = key.split('=')
-                val = eval(val)
+                val = eval(val.replace('LL',''))
             else:
                 val = last + 1
             key = key.strip()
