@@ -47,7 +47,8 @@ class IpConfigTest(TestCase):
                 self.assertLessEqual(metric, 1000)
             for data in c.RouteData:
                 self.assertIsIpNetwork(data['dest'], data['prefix'])
-                self.assertIsIpAddress(data['next-hop'])
+                if 'next-hop' in data:
+                    self.assertIsIpAddress(data['next-hop'])
                 self.assertLessEqual(data['metric'], 1000)
 
 if __name__ == '__main__':
