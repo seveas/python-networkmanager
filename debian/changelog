@@ -1,3 +1,9 @@
+python-networkmanager (2.1-2) bionic; urgency=medium
+
+  * Bump debian/compat
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Fri, 27 Apr 2018 01:06:31 +0200
+
 python-networkmanager (2.1-1) bionic; urgency=medium
 
   * New upstream release
