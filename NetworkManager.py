@@ -304,8 +304,8 @@ class Connection(NMDbusInterface):
         self.uuid = self.GetSettings()['connection']['uuid']
 
     def GetSecrets(self, name=None):
-        if name == None:
-            settings = self.GetSettings()
+        settings = self.GetSettings()
+        if name is None:
             name = settings['connection']['type']
             name = settings[name].get('security', name)
         try:
