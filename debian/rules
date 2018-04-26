@@ -1,21 +1,6 @@
 #!/usr/bin/make -f
 
+export PYBUILD_NAME=python-networkmanager
+
 %:
-	dh $@ --with=python2,python3
-
-clean:
-	dh clean
-	make -C docs clean
-
-override_dh_auto_build:
-	dh_auto_build
-	make -C docs html
-	set -ex; for python in $(shell py3versions -r); do \
-		$$python setup.py build; \
-	done;
-
-override_dh_auto_install:
-	dh_auto_install
-	set -ex; for python in $(shell py3versions -r); do \
-		$$python setup.py install --root=$(CURDIR)/debian/tmp --install-layout=deb; \
-	done;
+	dh $@ --with python2,python3,pypy --buildsystem=pybuild

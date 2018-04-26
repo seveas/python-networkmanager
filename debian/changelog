@@ -1,3 +1,10 @@
+python-networkmanager (2.1-1) bionic; urgency=medium
+
+  * New upstream release
+  * Modernize packaging
+
+ -- Dennis Kaarsemaker <dennis@kaarsemaker.net>  Thu, 26 Apr 2018 23:20:39 +0200
+
 python-networkmanager (2.0.1-1) zesty; urgency=medium
 
   * New upstream release
