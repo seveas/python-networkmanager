@@ -504,6 +504,12 @@ class fixups(object):
                     settings['ipv4']['address-data'] = dbus.Array(
                         settings['ipv4']['address-data'],
                         signature=dbus.Signature('a{sv}'))
+                if 'route-data' in settings['ipv4']:
+                    for item in settings['ipv4']['route-data']:
+                        item['prefix'] = dbus.UInt32(item['prefix'])
+                    settings['ipv4']['route-data'] = dbus.Array(
+                        settings['ipv4']['route-data'],
+                        signature=dbus.Signature('a{sv}'))
                 if 'addresses' in settings['ipv4']:
                     settings['ipv4']['addresses'] = [fixups.addrconf_to_dbus(addr,socket.AF_INET) for addr in settings['ipv4']['addresses']]
                 if 'routes' in settings['ipv4']:
