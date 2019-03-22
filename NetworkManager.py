@@ -258,7 +258,7 @@ class NMDbusInterface(object):
     @property
     def proxy(self):
         if not self._proxy:
-            self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path)
+            self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path, follow_name_owner_changes=True)
             self._proxy.created = time.time()
         elif self._proxy.created < self.last_disconnect:
             if self.is_transient:
