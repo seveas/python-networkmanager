@@ -56,13 +56,17 @@ class SignalDispatcher(object):
         sargs = []
         if key not in self.handlers:
             return
-        sender = fixups.base_to_python(kwargs['path'])
-        for arg, (name, signature) in zip(args, self.args[key]):
-            if name:
-                skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
-            else:
-                # Older NetworkManager versions don't supply attribute names. Hope for the best.
-                sargs.append(fixups.to_python(type(sender).__name__, kwargs['signal'], None, arg, signature))
+        try:
+            sender = fixups.base_to_python(kwargs['path'])
+            for arg, (name, signature) in zip(args, self.args[key]):
+                if name:
+                    skwargs[name] = fixups.to_python(type(sender).__name__, kwargs['signal'], name, arg, signature)
+                else:
+                    # Older NetworkManager versions don't supply attribute names. Hope for the best.
+                    sargs.append(fixups.to_python(type(sender).__name__, kwargs['signal'], None, arg, signature))
+        except dbus.exceptions.DBusException:
+            # This happens if the sender went away. Tough luck, no signal for you.
+            return
         to_delete = []
         for pos, (match, receiver, rargs, rkwargs) in enumerate(self.handlers[key]):
             try:
@@ -82,6 +86,7 @@ class SignalDispatcher(object):
         if str(new) == "" or str(name) != 'org.freedesktop.NetworkManager':
             return
         NMDbusInterface.last_disconnect = time.time()
+        time.sleep(1) # Give NetworkManager a bit of time to start and rediscover itself.
         for key in self.handlers:
             val, self.handlers[key] = self.handlers[key], []
             for obj, func, args, kwargs in val:
@@ -259,7 +264,7 @@ class NMDbusInterface(object):
             if self.is_transient:
                 raise ObjectVanished(self)
             obj = type(self)(self.object_path)
-            if obj != self:
+            if obj.object_path != self.object_path:
                 self.object_path = obj.object_path
             self._proxy = dbus.SystemBus().get_object(self.dbus_service, self.object_path)
             self._proxy.created = time.time()
@@ -299,8 +304,8 @@ class Connection(NMDbusInterface):
         self.uuid = self.GetSettings()['connection']['uuid']
 
     def GetSecrets(self, name=None):
-        if name == None:
-            settings = self.GetSettings()
+        settings = self.GetSettings()
+        if name is None:
             name = settings['connection']['type']
             name = settings[name].get('security', name)
         try:
@@ -360,26 +365,32 @@ class Device(NMDbusInterface):
 
 
 def device_class(typ):
-     return {
-         NM_DEVICE_TYPE_ADSL: Adsl,
-         NM_DEVICE_TYPE_BOND: Bond,
-         NM_DEVICE_TYPE_BRIDGE: Bridge,
-         NM_DEVICE_TYPE_BT: Bluetooth,
-         NM_DEVICE_TYPE_ETHERNET: Wired,
-         NM_DEVICE_TYPE_GENERIC: Generic,
-         NM_DEVICE_TYPE_INFINIBAND: Infiniband,
-         NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
-         NM_DEVICE_TYPE_MACVLAN: Macvlan,
-         NM_DEVICE_TYPE_MODEM: Modem,
-         NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
-         NM_DEVICE_TYPE_TEAM: Team,
-         NM_DEVICE_TYPE_TUN: Tun,
-         NM_DEVICE_TYPE_VETH: Veth,
-         NM_DEVICE_TYPE_VLAN: Vlan,
-         NM_DEVICE_TYPE_VXLAN: Vxlan,
-         NM_DEVICE_TYPE_WIFI: Wireless,
-         NM_DEVICE_TYPE_WIMAX: Wimax,
-     }[typ]
+    return {
+        NM_DEVICE_TYPE_ADSL: Adsl,
+        NM_DEVICE_TYPE_BOND: Bond,
+        NM_DEVICE_TYPE_BRIDGE: Bridge,
+        NM_DEVICE_TYPE_BT: Bluetooth,
+        NM_DEVICE_TYPE_ETHERNET: Wired,
+        NM_DEVICE_TYPE_GENERIC: Generic,
+        NM_DEVICE_TYPE_INFINIBAND: Infiniband,
+        NM_DEVICE_TYPE_IP_TUNNEL: IPTunnel,
+        NM_DEVICE_TYPE_MACVLAN: Macvlan,
+        NM_DEVICE_TYPE_MODEM: Modem,
+        NM_DEVICE_TYPE_OLPC_MESH: OlpcMesh,
+        NM_DEVICE_TYPE_TEAM: Team,
+        NM_DEVICE_TYPE_TUN: Tun,
+        NM_DEVICE_TYPE_VETH: Veth,
+        NM_DEVICE_TYPE_VLAN: Vlan,
+        NM_DEVICE_TYPE_VXLAN: Vxlan,
+        NM_DEVICE_TYPE_WIFI: Wireless,
+        NM_DEVICE_TYPE_WIMAX: Wimax,
+        NM_DEVICE_TYPE_MACSEC: MacSec,
+        NM_DEVICE_TYPE_DUMMY: Dummy,
+        NM_DEVICE_TYPE_PPP: PPP,
+        NM_DEVICE_TYPE_OVS_INTERFACE: OvsIf,
+        NM_DEVICE_TYPE_OVS_PORT: OvsPort,
+        NM_DEVICE_TYPE_OVS_BRIDGE: OvsBridge
+    }[typ]
 
 class Adsl(Device): pass
 class Bluetooth(Device): pass
@@ -399,6 +410,12 @@ class Vxlan(Device): pass
 class Wimax(Device): pass
 class Wired(Device): pass
 class Wireless(Device): pass
+class MacSec(Device): pass
+class Dummy(Device): pass
+class PPP(Device): pass
+class OvsIf(Device): pass
+class OvsPort(Device): pass
+class OvsBridge(Device): pass
 
 class NSP(TransientNMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager.Wimax.NSP']
@@ -481,6 +498,12 @@ class fixups(object):
             if 'ssid' in settings.get('802-11-wireless', {}):
                 settings['802-11-wireless']['ssid'] = fixups.ssid_to_dbus(settings['802-11-wireless']['ssid'])
             if 'ipv4' in settings:
+                if 'address-data' in settings['ipv4']:
+                    for item in settings['ipv4']['address-data']:
+                        item['prefix'] = dbus.UInt32(item['prefix'])
+                    settings['ipv4']['address-data'] = dbus.Array(
+                        settings['ipv4']['address-data'],
+                        signature=dbus.Signature('a{sv}'))
                 if 'addresses' in settings['ipv4']:
                     settings['ipv4']['addresses'] = [fixups.addrconf_to_dbus(addr,socket.AF_INET) for addr in settings['ipv4']['addresses']]
                 if 'routes' in settings['ipv4']:
@@ -716,6 +739,7 @@ del init_bus
 del xml_cache
 
 # Constants below are generated with makeconstants.py. Do not edit manually.
+NM_CAPABILITY_TEAM = 1
 NM_STATE_UNKNOWN = 0
 NM_STATE_ASLEEP = 10
 NM_STATE_DISCONNECTED = 20
@@ -750,10 +774,17 @@ NM_DEVICE_TYPE_IP_TUNNEL = 17
 NM_DEVICE_TYPE_MACVLAN = 18
 NM_DEVICE_TYPE_VXLAN = 19
 NM_DEVICE_TYPE_VETH = 20
+NM_DEVICE_TYPE_MACSEC = 21
+NM_DEVICE_TYPE_DUMMY = 22
+NM_DEVICE_TYPE_PPP = 23
+NM_DEVICE_TYPE_OVS_INTERFACE = 24
+NM_DEVICE_TYPE_OVS_PORT = 25
+NM_DEVICE_TYPE_OVS_BRIDGE = 26
 NM_DEVICE_CAP_NONE = 0
 NM_DEVICE_CAP_NM_SUPPORTED = 1
 NM_DEVICE_CAP_CARRIER_DETECT = 2
 NM_DEVICE_CAP_IS_SOFTWARE = 4
+NM_DEVICE_CAP_SRIOV = 8
 NM_WIFI_DEVICE_CAP_NONE = 0
 NM_WIFI_DEVICE_CAP_CIPHER_WEP40 = 1
 NM_WIFI_DEVICE_CAP_CIPHER_WEP104 = 2
@@ -766,9 +797,11 @@ NM_WIFI_DEVICE_CAP_ADHOC = 128
 NM_WIFI_DEVICE_CAP_FREQ_VALID = 256
 NM_WIFI_DEVICE_CAP_FREQ_2GHZ = 512
 NM_WIFI_DEVICE_CAP_FREQ_5GHZ = 1024
-NM_WIFI_DEVICE_CAP_IBSS_RSN = 2048
 NM_802_11_AP_FLAGS_NONE = 0
 NM_802_11_AP_FLAGS_PRIVACY = 1
+NM_802_11_AP_FLAGS_WPS = 2
+NM_802_11_AP_FLAGS_WPS_PBC = 4
+NM_802_11_AP_FLAGS_WPS_PIN = 8
 NM_802_11_AP_SEC_NONE = 0
 NM_802_11_AP_SEC_PAIR_WEP40 = 1
 NM_802_11_AP_SEC_PAIR_WEP104 = 2
@@ -792,6 +825,10 @@ NM_DEVICE_MODEM_CAPABILITY_POTS = 1
 NM_DEVICE_MODEM_CAPABILITY_CDMA_EVDO = 2
 NM_DEVICE_MODEM_CAPABILITY_GSM_UMTS = 4
 NM_DEVICE_MODEM_CAPABILITY_LTE = 8
+NM_WIMAX_NSP_NETWORK_TYPE_UNKNOWN = 0
+NM_WIMAX_NSP_NETWORK_TYPE_HOME = 1
+NM_WIMAX_NSP_NETWORK_TYPE_PARTNER = 2
+NM_WIMAX_NSP_NETWORK_TYPE_ROAMING_PARTNER = 3
 NM_DEVICE_STATE_UNKNOWN = 0
 NM_DEVICE_STATE_UNMANAGED = 10
 NM_DEVICE_STATE_UNAVAILABLE = 20
@@ -868,12 +905,73 @@ NM_DEVICE_STATE_REASON_SIM_PIN_INCORRECT = 59
 NM_DEVICE_STATE_REASON_NEW_ACTIVATION = 60
 NM_DEVICE_STATE_REASON_PARENT_CHANGED = 61
 NM_DEVICE_STATE_REASON_PARENT_MANAGED_CHANGED = 62
-NM_DEVICE_STATE_REASON_LAST = 65535
+NM_DEVICE_STATE_REASON_OVSDB_FAILED = 63
+NM_DEVICE_STATE_REASON_IP_ADDRESS_DUPLICATE = 64
+NM_DEVICE_STATE_REASON_IP_METHOD_UNSUPPORTED = 65
+NM_METERED_UNKNOWN = 0
+NM_METERED_YES = 1
+NM_METERED_NO = 2
+NM_METERED_GUESS_YES = 3
+NM_METERED_GUESS_NO = 4
 NM_ACTIVE_CONNECTION_STATE_UNKNOWN = 0
 NM_ACTIVE_CONNECTION_STATE_ACTIVATING = 1
 NM_ACTIVE_CONNECTION_STATE_ACTIVATED = 2
 NM_ACTIVE_CONNECTION_STATE_DEACTIVATING = 3
 NM_ACTIVE_CONNECTION_STATE_DEACTIVATED = 4
+NM_ACTIVE_CONNECTION_STATE_REASON_UNKNOWN = 0
+NM_ACTIVE_CONNECTION_STATE_REASON_NONE = 1
+NM_ACTIVE_CONNECTION_STATE_REASON_USER_DISCONNECTED = 2
+NM_ACTIVE_CONNECTION_STATE_REASON_DEVICE_DISCONNECTED = 3
+NM_ACTIVE_CONNECTION_STATE_REASON_SERVICE_STOPPED = 4
+NM_ACTIVE_CONNECTION_STATE_REASON_IP_CONFIG_INVALID = 5
+NM_ACTIVE_CONNECTION_STATE_REASON_CONNECT_TIMEOUT = 6
+NM_ACTIVE_CONNECTION_STATE_REASON_SERVICE_START_TIMEOUT = 7
+NM_ACTIVE_CONNECTION_STATE_REASON_SERVICE_START_FAILED = 8
+NM_ACTIVE_CONNECTION_STATE_REASON_NO_SECRETS = 9
+NM_ACTIVE_CONNECTION_STATE_REASON_LOGIN_FAILED = 10
+NM_ACTIVE_CONNECTION_STATE_REASON_CONNECTION_REMOVED = 11
+NM_ACTIVE_CONNECTION_STATE_REASON_DEPENDENCY_FAILED = 12
+NM_ACTIVE_CONNECTION_STATE_REASON_DEVICE_REALIZE_FAILED = 13
+NM_ACTIVE_CONNECTION_STATE_REASON_DEVICE_REMOVED = 14
+NM_SECRET_AGENT_GET_SECRETS_FLAG_NONE = 0
+NM_SECRET_AGENT_GET_SECRETS_FLAG_ALLOW_INTERACTION = 1
+NM_SECRET_AGENT_GET_SECRETS_FLAG_REQUEST_NEW = 2
+NM_SECRET_AGENT_GET_SECRETS_FLAG_USER_REQUESTED = 4
+NM_SECRET_AGENT_GET_SECRETS_FLAG_WPS_PBC_ACTIVE = 8
+NM_SECRET_AGENT_GET_SECRETS_FLAG_ONLY_SYSTEM = 2147483648
+NM_SECRET_AGENT_GET_SECRETS_FLAG_NO_ERRORS = 1073741824
+NM_IP_TUNNEL_MODE_UNKNOWN = 0
+NM_IP_TUNNEL_MODE_IPIP = 1
+NM_IP_TUNNEL_MODE_GRE = 2
+NM_IP_TUNNEL_MODE_SIT = 3
+NM_IP_TUNNEL_MODE_ISATAP = 4
+NM_IP_TUNNEL_MODE_VTI = 5
+NM_IP_TUNNEL_MODE_IP6IP6 = 6
+NM_IP_TUNNEL_MODE_IPIP6 = 7
+NM_IP_TUNNEL_MODE_IP6GRE = 8
+NM_IP_TUNNEL_MODE_VTI6 = 9
+NM_CHECKPOINT_CREATE_FLAG_NONE = 0
+NM_CHECKPOINT_CREATE_FLAG_DESTROY_ALL = 1
+NM_CHECKPOINT_CREATE_FLAG_DELETE_NEW_CONNECTIONS = 2
+NM_CHECKPOINT_CREATE_FLAG_DISCONNECT_NEW_DEVICES = 4
+NM_ROLLBACK_RESULT_OK = 0
+NM_ROLLBACK_RESULT_ERR_NO_DEVICE = 1
+NM_ROLLBACK_RESULT_ERR_DEVICE_UNMANAGED = 2
+NM_ROLLBACK_RESULT_ERR_FAILED = 3
+NM_ACTIVATION_STATE_FLAG_NONE = 0
+NM_ACTIVATION_STATE_FLAG_IS_MASTER = 1
+NM_ACTIVATION_STATE_FLAG_IS_SLAVE = 2
+NM_ACTIVATION_STATE_FLAG_LAYER2_READY = 4
+NM_ACTIVATION_STATE_FLAG_IP4_READY = 8
+NM_ACTIVATION_STATE_FLAG_IP6_READY = 16
+NM_ACTIVATION_STATE_FLAG_MASTER_HAS_SLAVES = 32
+NM_SETTINGS_UPDATE2_FLAG_NONE = 0
+NM_SETTINGS_UPDATE2_FLAG_TO_DISK = 1
+NM_SETTINGS_UPDATE2_FLAG_IN_MEMORY = 2
+NM_SETTINGS_UPDATE2_FLAG_IN_MEMORY_DETACHED = 4
+NM_SETTINGS_UPDATE2_FLAG_IN_MEMORY_ONLY = 8
+NM_SETTINGS_UPDATE2_FLAG_VOLATILE = 16
+NM_SETTINGS_UPDATE2_FLAG_BLOCK_AUTOCONNECT = 32
 NM_VPN_SERVICE_STATE_UNKNOWN = 0
 NM_VPN_SERVICE_STATE_INIT = 1
 NM_VPN_SERVICE_STATE_SHUTDOWN = 2

@@ -31,7 +31,7 @@ class TestCase(unittest.TestCase):
 
     def assertIsIpAddress(self, ip):
         try:
-            ipaddress.ip_address(ip)
+            ipaddress.ip_address(six.text_type(ip))
         except ValueError as e:
             raise self.failureException(str(e))
 
