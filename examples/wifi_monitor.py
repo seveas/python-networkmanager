@@ -1,7 +1,7 @@
 """
 Show and monitor available access points
 """
-from gi.repository import GObject
+from gi.repository import GLib
 import dbus.mainloop.glib
 import NetworkManager
 
@@ -23,7 +23,7 @@ def main():
             ap.OnPropertiesChanged(ap_propchange)
         except NetworkManager.ObjectVanished:
             pass
-    GObject.MainLoop().run()
+    GLib.MainLoop().run()
 
 def ap_added(dev, interface, signal, access_point):
     ssids[access_point.object_path] = access_point.Ssid

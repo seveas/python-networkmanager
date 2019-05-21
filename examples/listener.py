@@ -3,7 +3,7 @@ Listen to some available signals from NetworkManager
 """
 
 import dbus.mainloop.glib
-from gi.repository import GObject
+from gi.repository import GLib
 import NetworkManager
 import time
 
@@ -26,7 +26,7 @@ def main():
     NetworkManager.NetworkManager.OnDeviceAdded(adddevice)
 
     out("Waiting for signals")
-    loop = GObject.MainLoop()
+    loop = GLib.MainLoop()
     loop.run()
 
 if __name__ == '__main__':
