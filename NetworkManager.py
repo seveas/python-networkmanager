@@ -517,6 +517,18 @@ class fixups(object):
                 if 'dns' in settings['ipv4']:
                     settings['ipv4']['dns'] = [fixups.addr_to_dbus(addr,socket.AF_INET) for addr in settings['ipv4']['dns']]
             if 'ipv6' in settings:
+                if 'address-data' in settings['ipv6']:
+                    for item in settings['ipv6']['address-data']:
+                        item['prefix'] = dbus.UInt32(item['prefix'])
+                    settings['ipv6']['address-data'] = dbus.Array(
+                        settings['ipv6']['address-data'],
+                        signature=dbus.Signature('a{sv}'))
+                if 'route-data' in settings['ipv6']:
+                    for item in settings['ipv6']['route-data']:
+                        item['prefix'] = dbus.UInt32(item['prefix'])
+                    settings['ipv6']['route-data'] = dbus.Array(
+                        settings['ipv6']['route-data'],
+                        signature=dbus.Signature('a{sv}'))
                 if 'addresses' in settings['ipv6']:
                     settings['ipv6']['addresses'] = [fixups.addrconf_to_dbus(addr,socket.AF_INET6) for addr in settings['ipv6']['addresses']]
                 if 'routes' in settings['ipv6']:
