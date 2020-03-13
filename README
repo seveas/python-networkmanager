@@ -1,6 +1,8 @@
 python-networkmanager Easy communication with NetworkManager
 ============================================================
 
+**NOTE** this version is patched for [this](https://github.com/seveas/python-networkmanager/issues/68) issue.
+
 python-networkmanager wraps NetworkManagers D-Bus interface so you can be less
 verbose when talking to NetworkManager from python. All interfaces have been
 wrapped in classes, properties are exposed as python properties and function
