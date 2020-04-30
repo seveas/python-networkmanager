@@ -389,8 +389,9 @@ def device_class(typ):
         NM_DEVICE_TYPE_PPP: PPP,
         NM_DEVICE_TYPE_OVS_INTERFACE: OvsIf,
         NM_DEVICE_TYPE_OVS_PORT: OvsPort,
-        NM_DEVICE_TYPE_OVS_BRIDGE: OvsBridge
-    }[typ]
+        NM_DEVICE_TYPE_OVS_BRIDGE: OvsBridge,
+        NM_DEVICE_TYPE_WIFIP2P: WifiP2P
+    }.get(typ, Generic)
 
 class Adsl(Device): pass
 class Bluetooth(Device): pass
@@ -416,6 +417,7 @@ class PPP(Device): pass
 class OvsIf(Device): pass
 class OvsPort(Device): pass
 class OvsBridge(Device): pass
+class WifiP2P(Device): pass
 
 class NSP(TransientNMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager.Wimax.NSP']
@@ -780,6 +782,7 @@ NM_DEVICE_TYPE_PPP = 23
 NM_DEVICE_TYPE_OVS_INTERFACE = 24
 NM_DEVICE_TYPE_OVS_PORT = 25
 NM_DEVICE_TYPE_OVS_BRIDGE = 26
+NM_DEVICE_TYPE_WIFIP2P = 30
 NM_DEVICE_CAP_NONE = 0
 NM_DEVICE_CAP_NM_SUPPORTED = 1
 NM_DEVICE_CAP_CARRIER_DETECT = 2
