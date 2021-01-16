@@ -1,7 +1,7 @@
 # NetworkManager - a library to make interacting with the NetworkManager daemon
 # easier.
 #
-# (C)2011-2017 Dennis Kaarsemaker
+# (C)2011-2021 Dennis Kaarsemaker
 # License: zlib
 
 import copy
