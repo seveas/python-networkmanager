@@ -393,7 +393,8 @@ def device_class(typ):
         NM_DEVICE_TYPE_WPAN: Wpan,
         NM_DEVICE_TYPE_6LOWPAN: SixLoWpan,
         NM_DEVICE_TYPE_WIREGUARD: WireGuard,
-        NM_DEVICE_TYPE_WIFI_P2P: WifiP2p
+        NM_DEVICE_TYPE_VRF: Vrf,
+        NM_DEVICE_TYPE_WIFI_P2P: WifiP2p,
     }[typ]
 
 class Adsl(Device): pass
@@ -424,6 +425,7 @@ class Wpan(Device): pass
 class SixLoWpan(Device): pass
 class WireGuard(Device): pass
 class WifiP2p(Device): pass
+class Vrf(Device): pass
 
 class NSP(TransientNMDbusInterface):
     interface_names = ['org.freedesktop.NetworkManager.Wimax.NSP']
