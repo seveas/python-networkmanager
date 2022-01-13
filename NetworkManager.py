@@ -505,6 +505,15 @@ class fixups(object):
                 for cert in ['ca-cert', 'client-cert', 'phase2-ca-cert', 'phase2-client-cert', 'private-key']:
                     if cert in settings[key]:
                         settings[key][cert] = fixups.cert_to_dbus(settings[key][cert])
+                if 'routing-rules' in settings[key]:
+                    for rule in settings[key]['routing-rules']:
+                        for p in rule:
+                            if p == 'family':
+                                rule[p] = dbus.Int32(rule[p])
+                            else:
+                                rule[p] = dbus.UInt32(rule[p])
+                    settings[key]['routing-rules'] = dbus.Array(
+                            settings[key]['routing-rules'], signature=dbus.Signature('a{sv}'))
             if 'ssid' in settings.get('802-11-wireless', {}):
                 settings['802-11-wireless']['ssid'] = fixups.ssid_to_dbus(settings['802-11-wireless']['ssid'])
             if 'ipv4' in settings:
