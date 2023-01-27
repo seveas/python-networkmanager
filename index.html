@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python API to talk to NetworkManager &mdash; python-networkmanager 2.2 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> python-networkmanager
+          </a>
+              <div class="version">
+                2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Python API to talk to NetworkManager</a><ul>
+<li><a class="reference internal" href="#module-NetworkManager">The <code class="xref py py-mod docutils literal notranslate"><span class="pre">NetworkManager</span></code> module</a></li>
+<li><a class="reference internal" href="#list-of-classes">List of classes</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">python-networkmanager</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Python API to talk to NetworkManager</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="python-api-to-talk-to-networkmanager">
+<h1>Python API to talk to NetworkManager<a class="headerlink" href="#python-api-to-talk-to-networkmanager" title="Permalink to this headline">¶</a></h1>
+<p>NetworkManager provides a detailed and capable D-Bus interface on the system
+bus. You can use this interface to query NetworkManager about the overall state
+of the network and details of network devices like current IP addresses or DHCP
+options, and to configure, activate and deactivate network connections.</p>
+<p>python-networkmanager takes this D-Bus interface and wraps D-Bus interfaces in
+classes and D-Bus methods and properties in their python equivalents.</p>
+<div class="section" id="module-NetworkManager">
+<span id="the-networkmanager-module"></span><h2>The <a class="reference internal" href="#module-NetworkManager" title="NetworkManager: Talk to NetworkManager from python (Linux systems with NetworkManager 0.9 and newer)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">NetworkManager</span></code></a> module<a class="headerlink" href="#module-NetworkManager" title="Permalink to this headline">¶</a></h2>
+<p>All the code is contained in one module: <a class="reference internal" href="#module-NetworkManager" title="NetworkManager: Talk to NetworkManager from python (Linux systems with NetworkManager 0.9 and newer)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">NetworkManager</span></code></a>. Using it is as
+simple as you think it is:</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">NetworkManager</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">Version</span>
+<span class="go">&#39;1.2.0&#39;</span>
+</pre></div>
+</div>
+<p>NetworkManager exposes a lot of information via D-Bus and also allows full
+control of network settings. The full D-Bus interface can be found on
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/spec.html">NetworkManager project website</a>. All interfaces listed there have been
+wrapped in classes as listed below.</p>
+<dl class="function">
+<dt id="NetworkManager.const">
+<code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">const</code><span class="sig-paren">(</span><em class="sig-param">prefix</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#NetworkManager.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Many of NetworkManagers D-Bus methods expect or return numeric constants, for
+which there are enums in the C source code. These constants, such as
+<code class="xref py py-data docutils literal notranslate"><span class="pre">NM_STATE_CONNECTED_GLOBAL</span></code>, can all be found in the
+<a class="reference internal" href="#module-NetworkManager" title="NetworkManager: Talk to NetworkManager from python (Linux systems with NetworkManager 0.9 and newer)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">NetworkManager</span></code></a> module as well. The <a class="reference internal" href="#NetworkManager.const" title="NetworkManager.const"><code class="xref py py-func docutils literal notranslate"><span class="pre">const()</span></code></a> function can help you
+translate them to text. For example:</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">const</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="go">&#39;connecting&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">const</span><span class="p">(</span><span class="s1">&#39;device_type&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">&#39;wifi&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-of-classes">
+<h2>List of classes<a class="headerlink" href="#list-of-classes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="NetworkManager.ObjectVanished">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">ObjectVanished</code><a class="headerlink" href="#NetworkManager.ObjectVanished" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>This Exception will be raised when you try to call a method or access a
+property on a dbus object that no longer exists. Objects can go missing if
+devices are removed, connections are disabled or NetworkManager is restarted.</p>
+<dl class="class">
+<dt id="NetworkManager.NMDbusInterface">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">NMDbusInterface</code><a class="headerlink" href="#NetworkManager.NMDbusInterface" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>This is the base class of all classes below. It handles the marshalling of data
+and the automatic creation of properties and methods.</p>
+<p>Each property, method and signal exposed via the D-Bus interface is
+automatically mirrored as an attribute of the actual classes. Moreover, the
+data is made slightly more usable by performing the following transformations
+on received and sent data.</p>
+<ul class="simple">
+<li><p>IP addresses are returned as strings of the form <code class="xref py py-data docutils literal notranslate"><span class="pre">1.2.3.4</span></code> instead of
+network byte ordered integers.</p></li>
+<li><p>Route metrics are returned in host byte order, so you can use them as
+integers.</p></li>
+<li><p>Mac addresses and BSSIDs are always returned as strings of the form
+<code class="xref py py-data docutils literal notranslate"><span class="pre">00:11:22:33:44:55</span></code> instead of byte sequences.</p></li>
+<li><p>Wireless SSID’s are returned as strings instead of byte sequences. They will
+be decoded as UTF-8 data, so using any other encoding for your SSID will
+result in errors.</p></li>
+<li><p>DHCP options are turned into integers or booleans as appropriate</p></li>
+<li><p>Signals can be connected to using calls to On<em>SignalName</em> functions.</p></li>
+</ul>
+<p>Here’s a short example to illustrate:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">NetworkManager</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">Version</span>
+<span class="go">&#39;1.4.4&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">GetPermissions</span><span class="p">()</span>
+<span class="go">{&#39;org.freedesktop.NetworkManager.checkpoint-rollback&#39;: &#39;auth&#39;,</span>
+<span class="go"> &#39;org.freedesktop.NetworkManager.enable-disable-network&#39;: &#39;yes&#39;,</span>
+<span class="go"> ...}</span>
+<span class="go"># Must have a mainloop to use signals</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">dbus.mainloop.glib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dbus</span><span class="o">.</span><span class="n">mainloop</span><span class="o">.</span><span class="n">glib</span><span class="o">.</span><span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">OnStateChanged</span><span class="p">(</span><span class="n">handle_state_change</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="NetworkManager.TransientNMDbusInterface">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">TransientNMDbusInterface</code><a class="headerlink" href="#NetworkManager.TransientNMDbusInterface" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Subclasses of this class, which are ActiveConnection, NSP, IP[46]Config and
+DHCP[46]Config never survive a NetworkManager restart. Other objects may
+survive a restart, but get a different object path.</p>
+<dl class="class">
+<dt id="NetworkManager.NetworkManager">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">NetworkManager</code><a class="headerlink" href="#NetworkManager.NetworkManager" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The main <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.html">NetworkManager</a>
+object; the <cite>NetworkManager.Networkmanager</cite> object is actually the singleton
+instance of this class.</p>
+<dl class="class">
+<dt id="NetworkManager.Settings">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">Settings</code><a class="headerlink" href="#NetworkManager.Settings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Settings.html">Settings</a>
+object, which can be used to add connections, list connections or update your
+hostname; the <cite>NetworkManager.Settings</cite> object is actually the singleton
+instance of this class.</p>
+<dl class="class">
+<dt id="NetworkManager.AgentManager">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">AgentManager</code><a class="headerlink" href="#NetworkManager.AgentManager" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.AgentManager.html">AgentManager</a>
+object, whose methods you’ll need to call when implementing a secrets agent;
+the <cite>NetworkManager.AgentManager</cite> object is actually the singleton instance of
+this class.</p>
+<dl class="class">
+<dt id="NetworkManager.Connection">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">Connection</code><a class="headerlink" href="#NetworkManager.Connection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p><a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Settings.Connection.html">Connection</a>
+objects represent network configurations configured by the user.</p>
+<dl class="class">
+<dt id="NetworkManager.ActiveConnection">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">ActiveConnection</code><a class="headerlink" href="#NetworkManager.ActiveConnection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="NetworkManager.VPNConnection">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">VPNConnection</code><a class="headerlink" href="#NetworkManager.VPNConnection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Active connections are represented by <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Connection.Active.html">ActiveConnection</a>
+objects. <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.VPN.Connection.html">VPNConnection</a>
+is a subclass for active VPN connection that implements both the
+Connection.Active and VPN.Connection interfaces.</p>
+<dl class="class">
+<dt id="NetworkManager.IP4Config">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">IP4Config</code><a class="headerlink" href="#NetworkManager.IP4Config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="NetworkManager.IP6Config">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">IP6Config</code><a class="headerlink" href="#NetworkManager.IP6Config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="NetworkManager.DHCP4Config">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">DHCP4Config</code><a class="headerlink" href="#NetworkManager.DHCP4Config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="NetworkManager.DHCP6Config">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">DHCP6Config</code><a class="headerlink" href="#NetworkManager.DHCP6Config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Active network connections and devices can all have <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.IP4Config.html">IPv4</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.IP6Config.html">IPv6</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.DHCP4Config.html">IPv4 DHCP</a>
+and <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.DHCP6Config.html">IPv6 DHCP</a>
+information attached to them, which is represented by instances of these
+classes.</p>
+<dl class="class">
+<dt id="NetworkManager.AccessPoint">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">AccessPoint</code><a class="headerlink" href="#NetworkManager.AccessPoint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Wifi <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.AccessPoint.html">Accesspoints</a>,
+as visibly by any 802.11 wifi interface.</p>
+<dl class="class">
+<dt id="NetworkManager.NSP">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">NSP</code><a class="headerlink" href="#NetworkManager.NSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Wimax <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.PPP.html">Network Service Providers</a>.</p>
+<dl class="class">
+<dt id="NetworkManager.Device">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">Device</code><a class="headerlink" href="#NetworkManager.Device" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>All device classes implement the <a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.html">Device</a>
+interface, which gives you access to basic device properties. Note that you will never see instances of this class, only of its devicetype-specific subclasses which impletemnt not only the Device interface but also their own specific interface. Supported device types are
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Adsl.html">Adsl</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Bluetooth.html">Bluetooth</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Bond.html">Bond</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Bridge.html">Bridge</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Generic.html">Generic</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Infiniband.html">Infiniband</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.IPTunnel.html">IPTunnel</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Macvlan.html">Macvlan</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Modem.html">Modem</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.OlpcMesh.html">OlpcMesh</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Team.html">Team</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Tun.html">Tun</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Veth.html">Veth</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Vlan.html">Vlan</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Vxlan.html">Vxlan</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Wimax.html">Wimax</a>,
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Wired.html">Wired</a> and
+<a class="reference external" href="https://developer.gnome.org/NetworkManager/1.2/gdbus-org.freedesktop.NetworkManager.Device.Wireless.html">Wireless</a></p>
+<dl class="class">
+<dt id="NetworkManager.SecretAgent">
+<em class="property">class </em><code class="sig-prename descclassname">NetworkManager.</code><code class="sig-name descname">SecretAgent</code><a class="headerlink" href="#NetworkManager.SecretAgent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The NetworkManager daemon can ask separate programs, called agents, for secrets
+if it needs them. The NetworkManager applet and the <cite>nmcli</cite> command-line tool
+are examples of such agents. You can also write such agents by subclassing the
+<cite>SecretAgent</cite> class and providing a <cite>GetSecrets</cite> method as in the following
+example, which returns a static password for each secret:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">dbus.mainloop.glib</span>
+<span class="kn">import</span> <span class="nn">GObject</span>
+<span class="kn">import</span> <span class="nn">NetworkManager</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">NetworkManager</span><span class="o">.</span><span class="n">SecretAgent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">GetSecrets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">setting_name</span><span class="p">,</span> <span class="n">hints</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">setting_name</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;secrets&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;TopSecret!&#39;</span><span class="p">}}}</span>
+
+<span class="n">agent</span> <span class="o">=</span> <span class="n">MyAgent</span><span class="p">()</span>
+<span class="n">dbus</span><span class="o">.</span><span class="n">mainloop</span><span class="o">.</span><span class="n">glib</span><span class="o">.</span><span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Beware that NetworkManager will ask each agent in turn in what is in essence
+random order. Except it will prioritize the program that activated the
+connection. So if you want to make sure your agent is called first, activate
+the connection from the same application.</p>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2011-2021, Dennis Kaarsemaker.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
